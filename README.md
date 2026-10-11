@@ -116,14 +116,13 @@ Se não der conta, dá para pedir aumento de cota ao Google (é gratuito, mas pa
 
 ### 4. Edge Function de busca
 
-Com a [Supabase CLI](https://supabase.com/docs/guides/cli) instalada:
+Pelo painel do Supabase, sem instalar nada:
 
-```bash
-supabase login
-supabase link --project-ref SEU-PROJECT-REF
-supabase secrets set YOUTUBE_API_KEY=sua-chave-aqui
-supabase functions deploy youtube-search
-```
+1. **Edge Functions › Secrets:** adicione `YOUTUBE_API_KEY` com a chave do YouTube.
+2. **Edge Functions › Deploy a new function › Via Editor:** apague o exemplo, cole o conteúdo de `supabase/functions/youtube-search/index.ts`, dê o nome **`youtube-search`** e clique em **Deploy function**.
+3. Na aba **Settings** da função, **desligue "Verify JWT with legacy secret"** e salve. Projetos novos do Supabase assinam o login com o sistema novo de chaves, e essa opção recusaria todo mundo. A função já confere sozinha se a pessoa está logada.
+
+(Com a Supabase CLI também funciona: `supabase secrets set YOUTUBE_API_KEY=...` e `supabase functions deploy youtube-search --no-verify-jwt`.)
 
 A chave do YouTube fica só no servidor, nunca no navegador.
 

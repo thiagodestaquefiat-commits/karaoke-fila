@@ -1,4 +1,4 @@
 project_id = "karaoke-fila"
 
 [functions.youtube-search]
-verify_jwt = true
+verify_jwt = false  # a função confere o login sozinha (projetos com o sistema novo de chaves do Supabase)
