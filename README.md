@@ -51,6 +51,21 @@ Exemplo: a fila é `Duda (1ª) > Thiago (2ª)`. Chega a Eva pela primeira vez e 
 - Em **Ajustes**, o DJ pode desligar a regra e voltar para a ordem de chegada pura.
 - Quem está numa rodada maior vê no celular que o horário pode mudar se chegar gente nova.
 
+### Vídeo em tela cheia na TV
+
+O notebook do DJ fica ligado na TV pelo cabo HDMI. No início da noite:
+
+1. No painel, clique em **Abrir TV**. Abre uma janela com a tela da TV.
+2. Arraste essa janela para a TV. No Windows, ative "Estender" as telas com **Win + P**.
+3. Na janela da TV, clique em **Ligar vídeo e som da TV**. O navegador só libera o som depois desse clique. A janela entra em tela cheia; se não entrar, aperte **F11**.
+
+Daí em diante:
+- Quando alguém começa a cantar, **a TV mostra só o vídeo do YouTube, em tela cheia, com o som**. Quando a música acaba, ela volta para a fila e o QR code.
+- O painel vira o **controle remoto**: Próxima, Pausar e Tocar livre comandam o vídeo da TV, e o painel mostra a música e o andamento. O botão fica verde, escrito "TV conectada".
+- Se a janela da TV for fechada, o vídeo volta a tocar no próprio painel.
+
+As duas janelas conversam direto pelo navegador do notebook (`BroadcastChannel`, em `web/js/tvlink.js`), sem internet, então o comando chega na hora. Por isso elas precisam estar **no mesmo notebook e no mesmo navegador**.
+
 ### Tocar livre (DJ)
 
 O DJ pode tocar **qualquer coisa, a hora que quiser**: a música dele para cantar, um som de fundo enquanto vai ao banheiro, um mix entre uma música e outra. No card **Tocar livre** do painel, ele busca no YouTube ("Qualquer música" ou "Só karaokê") e aperta **Tocar agora**.

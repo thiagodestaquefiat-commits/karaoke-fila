@@ -45,3 +45,28 @@ html, body { height: 100%; overflow: hidden; cursor: none; }
 .tv-qr-text { font-size: 1.7vw; font-weight: 600; line-height: 1.3; }
 .tv-closed { background: #141118; color: var(--yellow); padding: 1vh 1.4vw; border-radius: 999px; font-weight: 700; font-size: 1.3vw; }
 .qr-fallback { width: 20vw; font-size: 1vw; word-break: break-all; color: #141118; }
+
+/* Vídeo do YouTube em tela cheia (TV como player) */
+.tv-video { position: fixed; inset: 0; z-index: 50; background: #000; }
+.tv-video #tv-player, .tv-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* Modo demonstração: no lugar do vídeo */
+.tv-fake {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2.4vh; padding: 6vw; text-align: center; background: radial-gradient(circle at 50% 40%, #2a1714, #000 70%);
+}
+.tv-fake .fake-label { font-size: 1.4vw; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; }
+.tv-fake .fake-title { font-family: var(--font-display); font-size: 4.2vw; font-weight: 800; line-height: 1.05; max-width: 80vw; }
+.tv-fake .fake-bar { width: 50vw; height: 0.8vh; background: #ffffff22; border-radius: 99px; overflow: hidden; }
+.tv-fake .fake-bar span { display: block; height: 100%; background: var(--pink); }
+.tv-fake .fake-time { font-size: 1.6vw; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Botão para liberar o som (aparece uma vez por noite) */
+.tv-activate {
+  position: fixed; inset: 0; z-index: 60; cursor: auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh;
+  background: rgba(0, 0, 0, 0.88); text-align: center; padding: 5vw;
+}
+.tv-activate-logo { height: 18vh; width: auto; }
+.tv-activate-btn { font-size: clamp(18px, 2vw, 30px); min-height: 8vh; padding: 0 4vw; border-radius: 999px; }
+.tv-activate p { color: var(--muted); font-size: clamp(14px, 1.3vw, 20px); line-height: 1.5; margin: 0; }

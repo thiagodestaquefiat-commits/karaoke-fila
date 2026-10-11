@@ -154,3 +154,16 @@
   .q-row .sub { font-size: 12px; }
   .q-row { padding: 8px 10px; row-gap: 6px; }
 }
+
+/* TV conectada: o vídeo toca lá; aqui mostra o andamento */
+.btn-tv.connected { background: var(--green); color: #141118; border-color: transparent; }
+.tv-status {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 24px; text-align: center; background: #0d0908;
+}
+.tv-status-label { color: var(--green); }
+.tv-status-title { font-family: var(--font-display); font-size: clamp(18px, 2.2vw, 28px); line-height: 1.15; max-width: 90%; }
+.tv-progress { width: min(420px, 80%); height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.tv-progress span { display: block; height: 100%; width: 0; background: var(--pink); transition: width 0.9s linear; }
+.tv-status-time { font-variant-numeric: tabular-nums; }

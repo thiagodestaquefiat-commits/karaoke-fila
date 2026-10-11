@@ -59,6 +59,10 @@
       </div>
 
       <div class="head-actions">
+        <button id="btn-tv" class="btn btn-secondary btn-tv" type="button" title="Abre a tela da TV numa janela. Arraste para a TV e o vídeo passa a tocar lá, em tela cheia.">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          <span id="btn-tv-label">Abrir TV</span>
+        </button>
         <button id="btn-toggle-open" class="btn toggle-open" type="button" aria-pressed="true">Pedidos abertos</button>
         <button id="btn-settings" class="btn btn-secondary" type="button" aria-expanded="false" aria-controls="settings">Ajustes</button>
       </div>
@@ -102,6 +106,12 @@
       <section class="stage" aria-label="Palco">
         <div class="player-box">
           <div id="player"></div>
+          <div id="tv-status" class="tv-status hidden" aria-live="polite">
+            <span class="eyebrow tv-status-label">NA TV, EM TELA CHEIA</span>
+            <strong id="tv-status-title" class="tv-status-title"></strong>
+            <div class="tv-progress"><span id="tv-progress-bar"></span></div>
+            <span id="tv-status-time" class="small muted"></span>
+          </div>
           <div id="player-empty" class="player-empty">
             <span>Nada tocando. Toque em <strong>Próxima</strong> para chamar o primeiro da fila.</span>
           </div>

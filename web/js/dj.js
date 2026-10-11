@@ -7,6 +7,7 @@ import {
 } from './supabase.js';
 import { computeSchedule, formatDuration, formatWait, formatClock, formatSongLength } from './estimate.js';
 import { applyBrand } from './brand.js';
+import { openTvLink } from './tvlink.js';
 
 const $ = (id) => document.getElementById(id);
 const SCREENS = ['screen-loading', 'screen-login', 'screen-not-dj', 'screen-no-night', 'screen-panel'];
@@ -106,8 +107,9 @@ function renderNow() {
 
   $('now-singer').textContent = p ? p.singer_name : '—';
   $('now-song').textContent = p ? `${p.title} · ${formatSongLength(p.duration_seconds)}` : 'Ninguém no palco';
-  $('player-empty').classList.toggle('hidden', !DEMO && (!!p || !!freeVideoId));
-  if (DEMO) {
+  renderTvArea();
+  $('player-empty').classList.toggle('hidden', tv.connected || (!DEMO && (!!p || !!freeVideoId)));
+  if (DEMO && !tv.connected) {
     $('player-empty').innerHTML = freeVideoId
       ? `<span>Modo demonstração<br><strong>Tocando livre: ${esc($('free-title-now').textContent)}</strong></span>`
       : p
@@ -233,14 +235,14 @@ $('btn-next').onclick = () => {
 };
 
 $('btn-pause').onclick = () => {
-  if (DEMO && state.playing) { // demo: sem player, avisa o banco direto
+  if (freeVideoId) return;
+  if (DEMO && !tv.connected && state.playing) { // demo sem TV: sem player, avisa o banco direto
     run(() => rpc('dj_pause', { p_paused: !state.night.paused_at }));
     return;
   }
-  if (!player || !playerReady || freeVideoId) return;
-  if (state.night.paused_at) player.playVideo();
-  else player.pauseVideo();
-  // O onStateChange do player avisa o banco (mantém a estimativa certa).
+  // O player (da TV ou daqui) avisa o estado de volta e isso atualiza o banco.
+  if (state.night.paused_at) out.play();
+  else out.pause();
 };
 
 $('btn-toggle-open').onclick = () =>
@@ -277,6 +279,7 @@ $('btn-end-night').onclick = () => {
 // nem no celular dos clientes, não mexe na fila.
 // ---------------------------------------------------------------
 let freeResults = [];
+let freeVideo = null; // { videoId, title, duration } do Tocar livre
 
 $('free-form').onsubmit = async (e) => {
   e.preventDefault();
@@ -303,10 +306,11 @@ $('free-form').onsubmit = async (e) => {
 
 $('free-results').onclick = (e) => {
   const btn = e.target.closest('button');
-  if (!btn || (!playerReady && !DEMO)) return;
+  if (!btn || !out.available()) return;
   const r = freeResults[Number(btn.closest('[data-index]').dataset.index)];
   freeVideoId = r.videoId;
-  if (playerReady) player.loadVideoById(r.videoId);
+  freeVideo = { videoId: r.videoId, title: r.title, duration: r.durationSeconds };
+  out.load(freeVideo, true);
   $('free-title-now').textContent = r.title;
   $('free-playing').classList.remove('hidden');
   $('free-results').innerHTML = '';
@@ -318,12 +322,11 @@ $('free-results').onclick = (e) => {
 function stopFree(reloadQueue = true) {
   if (!freeVideoId) return;
   freeVideoId = null;
+  freeVideo = null;
   $('free-playing').classList.add('hidden');
-  if (playerReady) {
-    player.stopVideo();
-    loadedRequestId = null;
-    if (reloadQueue) syncPlayer();
-  }
+  out.stop();
+  loadedRequestId = null;
+  if (reloadQueue) syncPlayer();
   renderNow();
 }
 
@@ -335,15 +338,115 @@ $('btn-logout').onclick = logout;
 $('btn-logout-2').onclick = logout;
 
 // ---------------------------------------------------------------
-// Player do YouTube
+// Saída do vídeo: na janela da TV (se aberta) ou no player do painel.
+// Notebook ligado na TV pelo cabo: o DJ abre a TV numa janela, arrasta
+// para a TV, e o vídeo passa a tocar lá em tela cheia, com o som.
 // ---------------------------------------------------------------
+const tv = { connected: false, lastSeen: 0, time: 0, duration: 0, win: null };
+const tvLink = openTvLink(onTvMessage);
+tvLink.post({ type: 'who' });           // tem uma TV aberta de antes?
+setInterval(checkTvAlive, 2000);
+
+const out = {
+  // Dá para tocar algo agora? (TV aberta, ou player do painel pronto, ou demo)
+  available: () => tv.connected || playerReady || DEMO,
+  load(video, autoplay, start = 0) {
+    if (tv.connected) {
+      tvLink.post({ type: 'load', ...video, autoplay, start });
+    } else if (playerReady) {
+      const opts = { videoId: video.videoId, startSeconds: start };
+      if (autoplay) player.loadVideoById(opts); else player.cueVideoById(opts);
+    }
+  },
+  play() { if (tv.connected) tvLink.post({ type: 'play' }); else if (playerReady) player.playVideo(); },
+  pause() { if (tv.connected) tvLink.post({ type: 'pause' }); else if (playerReady) player.pauseVideo(); },
+  stop() { if (tv.connected) tvLink.post({ type: 'stop' }); else if (playerReady) player.stopVideo(); },
+  restart() {
+    if (tv.connected) tvLink.post({ type: 'restart' });
+    else if (playerReady) { player.seekTo(0); player.playVideo(); }
+  },
+};
+
+// O que deveria estar no player agora: o Tocar livre ou quem está no palco.
+function currentVideo() {
+  if (freeVideo) return freeVideo;
+  const p = state.playing;
+  return p ? { videoId: p.video_id, title: `${p.singer_name} · ${p.title}`, duration: p.duration_seconds } : null;
+}
+
+$('btn-tv').onclick = () => {
+  if (tv.win && !tv.win.closed) { tv.win.focus(); return; }
+  const url = `tv.html?player=1${DEMO ? '&demo=1' : ''}`;
+  tv.win = window.open(url, 'karaoke-tv', 'popup,width=1280,height=720');
+  if (!tv.win) toast('O navegador bloqueou a janela. Libere pop-ups para este site e tente de novo.', 'error');
+  else toast('Arraste a janela para a TV e clique em "Ligar vídeo e som da TV".');
+};
+
+function onTvMessage(m) {
+  if (!m.type?.startsWith('tv-')) return;
+  tv.lastSeen = Date.now();
+  if (!tv.connected) onTvConnected();
+  if (m.type === 'tv-state') handleVideoState(m.state);
+  if (m.type === 'tv-progress') { tv.time = m.time; tv.duration = m.duration; renderTvArea(); }
+  if (m.type === 'tv-error') toast('Esse vídeo não pôde tocar na TV. Pule para a próxima ou remova.', 'error');
+}
+
+function checkTvAlive() {
+  if (tv.connected && Date.now() - tv.lastSeen > 6000) onTvDisconnected();
+}
+
+function onTvConnected() {
+  tv.connected = true;
+  // Passa para a TV o que estava tocando aqui, do mesmo ponto.
+  let start = 0;
+  let wasPlaying = false;
+  if (playerReady) {
+    start = player.getCurrentTime?.() || 0;
+    wasPlaying = player.getPlayerState?.() === YT.PlayerState.PLAYING;
+    player.stopVideo();
+  }
+  const video = currentVideo();
+  if (video) tvLink.post({ type: 'load', ...video, autoplay: wasPlaying, start });
+  toast('TV conectada. O vídeo agora toca na TV, em tela cheia.');
+  renderNow();
+}
+
+function onTvDisconnected() {
+  tv.connected = false;
+  tv.time = 0; tv.duration = 0;
+  // Volta para o player do painel, sem dar play sozinho.
+  const video = currentVideo();
+  if (video && playerReady) player.cueVideoById(video.videoId);
+  toast('A janela da TV fechou. O vídeo volta para o painel.', 'error');
+  renderNow();
+}
+
+function renderTvArea() {
+  const btn = $('btn-tv');
+  btn.classList.toggle('connected', tv.connected);
+  $('btn-tv-label').textContent = tv.connected ? 'TV conectada' : 'Abrir TV';
+  $('tv-status').classList.toggle('hidden', !tv.connected);
+  if (!tv.connected) return;
+  const video = currentVideo();
+  $('tv-status-title').textContent = video ? video.title : 'Nada tocando. A TV mostra a fila e o QR code.';
+  const pct = tv.duration ? Math.min(100, (tv.time / tv.duration) * 100) : 0;
+  $('tv-progress-bar').style.width = `${video ? pct : 0}%`;
+  const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`;
+  $('tv-status-time').textContent = video && tv.duration ? `${mmss(tv.time)} / ${mmss(tv.duration)}` : '';
+}
+
+// ---------- Player do painel (quando a TV não está aberta) ----------
 window.onYouTubeIframeAPIReady = () => {
   if (player) return;
   player = new YT.Player('player', {
     playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
     events: {
       onReady: () => { playerReady = true; syncPlayer(); },
-      onStateChange: onPlayerState,
+      onStateChange: (e) => {
+        if (tv.connected) return; // quem manda é a TV
+        const map = { 0: 'ended', 1: 'playing', 2: 'paused' };
+        if (map[e.data]) handleVideoState(map[e.data]);
+      },
       onError: () => toast('Esse vídeo não pôde tocar. Pule para a próxima ou remova.', 'error'),
     },
   });
@@ -351,38 +454,37 @@ window.onYouTubeIframeAPIReady = () => {
 // Se a API do YouTube carregou antes deste módulo:
 if (window.YT?.Player) window.onYouTubeIframeAPIReady();
 
+// Coloca no player (TV ou painel) quem está no palco agora.
 function syncPlayer() {
-  if (!playerReady || freeVideoId) return; // tocando livre: o DJ manda no player
+  if (!out.available() || freeVideoId) return; // tocando livre: o DJ manda no player
   const p = state.playing;
   if (!p) {
-    if (loadedRequestId) { player.stopVideo(); loadedRequestId = null; }
+    if (loadedRequestId) { out.stop(); loadedRequestId = null; }
     return;
   }
   if (p.id === loadedRequestId) return;
   loadedRequestId = p.id;
-  if (autoplayNext) player.loadVideoById(p.video_id);
-  else player.cueVideoById(p.video_id); // abriu o painel no meio: não dá play sozinho
+  out.load(currentVideo(), autoplayNext); // abriu o painel no meio: não dá play sozinho
   autoplayNext = false;
 }
 
-function onPlayerState(e) {
+// O vídeo (da TV ou do painel) mudou de estado.
+function handleVideoState(st) {
   const night = state.night;
   if (!night) return;
   if (freeVideoId) {
     // Tocando livre: nada vai para o banco. Só repete, se pedido.
-    if (e.data === YT.PlayerState.ENDED && $('free-loop').checked) {
-      player.seekTo(0);
-      player.playVideo();
-    }
+    if (st === 'ended' && $('free-loop').checked) out.restart();
     return;
   }
-  if (e.data === YT.PlayerState.PAUSED && !night.paused_at) {
+  if (!state.playing) return;
+  if (st === 'paused' && !night.paused_at) {
     rpc('dj_pause', { p_paused: true }).catch((err) => toast(err.message, 'error'));
   }
-  if (e.data === YT.PlayerState.PLAYING && night.paused_at) {
+  if (st === 'playing' && night.paused_at) {
     rpc('dj_pause', { p_paused: false }).catch((err) => toast(err.message, 'error'));
   }
-  if (e.data === YT.PlayerState.ENDED) {
+  if (st === 'ended') {
     toast('A música terminou. Chame o próximo quando estiver pronto.');
     $('btn-next').classList.add('pulse');
   }
