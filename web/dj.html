@@ -121,6 +121,42 @@
         </div>
 
         <div id="up-next" class="up-next card hidden"></div>
+
+        <section class="card free" aria-labelledby="free-title">
+          <div class="free-head">
+            <h2 id="free-title">Tocar livre</h2>
+            <span class="small muted">Toca só aqui no seu player. Não entra na fila e não aparece para ninguém.</span>
+          </div>
+
+          <div id="free-playing" class="free-playing hidden">
+            <div class="grow">
+              <span class="eyebrow">TOCANDO LIVRE</span>
+              <strong id="free-title-now"></strong>
+            </div>
+            <label class="check" for="free-loop">
+              <input id="free-loop" type="checkbox">
+              <span>Repetir</span>
+            </label>
+            <button id="btn-free-stop" class="btn btn-primary" type="button">Voltar para a fila</button>
+          </div>
+
+          <form id="free-form" class="free-search" role="search">
+            <div class="field grow-field">
+              <label for="free-input">Buscar no YouTube</label>
+              <input id="free-input" class="input" type="search" placeholder="Qualquer música, playlist ou mix" autocomplete="off">
+            </div>
+            <div class="field kind-field">
+              <label for="free-kind">Tipo</label>
+              <select id="free-kind" class="input">
+                <option value="background">Qualquer música</option>
+                <option value="karaoke">Só karaokê</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary" type="submit">Buscar</button>
+          </form>
+          <p id="free-hint" class="small muted"></p>
+          <ul id="free-results" class="list"></ul>
+        </section>
       </section>
 
       <section class="queue-col card" aria-label="Fila">

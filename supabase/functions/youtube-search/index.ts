@@ -13,6 +13,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const CACHE_DAYS = 30;
 const MIN_SECONDS = 60;   // descarta vinhetas e shorts
 const MAX_SECONDS = 900;  // descarta compilações de 1 hora
+const MAX_SECONDS_BACKGROUND = 3 * 3600; // no "Tocar livre" pode ser um mix longo
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -75,9 +76,12 @@ Deno.serve(async (req) => {
     const { data: userData } = await userClient.auth.getUser();
     if (!userData?.user) return json({ error: "Entre com o Google para buscar." }, 401);
 
-    const { q } = await req.json().catch(() => ({ q: "" }));
+    const { q, mode } = await req.json().catch(() => ({ q: "", mode: "" }));
+    // mode "background": "Tocar livre" do DJ, qualquer música (sem filtro de karaokê).
+    const background = mode === "background";
     const query = String(q ?? "").trim().slice(0, 80);
     const norm = normalize(query);
+    const cacheKey = background ? `bg:${norm}` : norm;
     if (norm.length < 2) return json({ results: [] });
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -86,7 +90,7 @@ Deno.serve(async (req) => {
     const { data: cached } = await admin
       .from("search_cache")
       .select("results, created_at")
-      .eq("query_norm", norm)
+      .eq("query_norm", cacheKey)
       .maybeSingle();
 
     const maxAgeMs = CACHE_DAYS * 24 * 60 * 60 * 1000;
@@ -100,7 +104,7 @@ Deno.serve(async (req) => {
       type: "video",
       videoEmbeddable: "true",
       maxResults: "15",
-      q: /karaok/i.test(norm) ? query : `${query} karaoke`,
+      q: background || /karaok/i.test(norm) ? query : `${query} karaoke`,
       regionCode: "BR",
       relevanceLanguage: "pt",
       key: YT_KEY,
@@ -153,14 +157,14 @@ Deno.serve(async (req) => {
             embeddable: meta?.embeddable ?? false,
           };
         })
-        .filter((r) => r.embeddable && r.durationSeconds >= MIN_SECONDS && r.durationSeconds <= MAX_SECONDS)
+        .filter((r) => r.embeddable && r.durationSeconds >= MIN_SECONDS && r.durationSeconds <= (background ? MAX_SECONDS_BACKGROUND : MAX_SECONDS))
         .map(({ embeddable: _e, ...r }) => r)
         .slice(0, 12);
     }
 
     await admin
       .from("search_cache")
-      .upsert({ query_norm: norm, results, created_at: new Date().toISOString() });
+      .upsert({ query_norm: cacheKey, results, created_at: new Date().toISOString() });
 
     return json({ results, cached: false });
   } catch (err) {

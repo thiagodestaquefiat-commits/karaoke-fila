@@ -45,6 +45,14 @@ Exemplo: a fila é `Duda (1ª) > Thiago (2ª)`. Chega a Eva pela primeira vez e 
 - Em **Ajustes**, o DJ pode desligar a regra e voltar para a ordem de chegada pura.
 - Quem está numa rodada maior vê no celular que o horário pode mudar se chegar gente nova.
 
+### Tocar livre (DJ)
+
+O DJ pode tocar **qualquer coisa, a hora que quiser**: a música dele para cantar, um som de fundo enquanto vai ao banheiro, um mix entre uma música e outra. No card **Tocar livre** do painel, ele busca no YouTube ("Qualquer música" ou "Só karaokê") e aperta **Tocar agora**.
+
+- Toca **só no player do DJ**. Não grava nada no banco, não entra na fila e **não aparece para ninguém**, nem na TV nem no celular dos clientes.
+- A opção **Repetir** deixa a música em loop, bom para som de fundo.
+- **Voltar para a fila** retorna o player para quem está no palco, sem dar play. **Próxima** também sai do modo livre e chama o próximo.
+
 ### "Não está aqui"
 
 Na primeira vez, a pessoa desce 3 posições e vê um aviso no celular. Na segunda, sai da fila. Essa regra fica em `dj_not_here()` no SQL e pode ser combinada com o dono.

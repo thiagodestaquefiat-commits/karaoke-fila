@@ -94,8 +94,9 @@ export async function rpc(name, params = {}) {
 }
 
 // Busca no YouTube pela Edge Function.
-export async function searchYouTube(q) {
-  const { data, error } = await supabase.functions.invoke('youtube-search', { body: { q } });
+// mode: 'karaoke' (padrão) ou 'background' (qualquer música, usado no "Tocar livre" do DJ).
+export async function searchYouTube(q, mode = 'karaoke') {
+  const { data, error } = await supabase.functions.invoke('youtube-search', { body: { q, mode } });
   if (error) {
     let message = 'Não foi possível buscar agora.';
     try {

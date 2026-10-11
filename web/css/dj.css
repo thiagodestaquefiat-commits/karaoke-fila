@@ -68,3 +68,20 @@
 
 .round { align-self: flex-start; margin-top: 2px; }
 .round.first { background: var(--green); color: #141118; }
+
+/* Tocar livre (só no player do DJ) */
+.free { display: flex; flex-direction: column; gap: 12px; }
+.free-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.free-search { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.free-search .grow-field { flex: 3 1 220px; }
+.free-search .kind-field { flex: 1 1 150px; }
+.free-search .btn { min-height: 52px; }
+.free-playing {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  background: var(--surface-2); border: 1px solid var(--yellow); border-radius: var(--radius); padding: 12px 14px;
+}
+.free-playing .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.free-playing .eyebrow { color: var(--yellow); }
+.free-result { flex-wrap: wrap; }
+.free-result .btn { min-height: 44px; padding: 0 14px; font-size: 14px; margin-left: auto; }
+#free-hint:empty { display: none; }

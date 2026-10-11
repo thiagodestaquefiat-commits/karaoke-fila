@@ -2,7 +2,7 @@
 // "não está aqui", abrir/fechar pedidos.
 import {
   supabase, getUser, getMyProfile, signInWithGoogle, signOut,
-  loadState, subscribeToChanges, rpc, esc, toast,
+  loadState, subscribeToChanges, rpc, esc, toast, searchYouTube,
 } from './supabase.js';
 import { computeSchedule, formatDuration, formatWait, formatClock, formatSongLength } from './estimate.js';
 import { applyBrand } from './brand.js';
@@ -22,6 +22,7 @@ let player = null;          // YT.Player
 let playerReady = false;
 let loadedRequestId = null; // qual pedido está carregado no player
 let autoplayNext = false;   // true quando o DJ apertou "Próxima"
+let freeVideoId = null;      // "Tocar livre": vídeo tocando só no player do DJ
 
 applyBrand();
 
@@ -104,7 +105,7 @@ function renderNow() {
 
   $('now-singer').textContent = p ? p.singer_name : '—';
   $('now-song').textContent = p ? `${p.title} · ${formatSongLength(p.duration_seconds)}` : 'Ninguém no palco';
-  $('player-empty').classList.toggle('hidden', !!p);
+  $('player-empty').classList.toggle('hidden', !!p || !!freeVideoId);
 
   if (p) {
     const secs = Math.round(schedule.remainingCurrentMs / 1000);
@@ -212,12 +213,13 @@ $('queue').onclick = (e) => {
 
 $('btn-next').onclick = () => {
   $('btn-next').classList.remove('pulse');
+  stopFree(false);
   autoplayNext = true;
   run(() => rpc('dj_next'), (r) => (r?.id ? `Chamando ${r.singer_name}` : 'A fila acabou.'));
 };
 
 $('btn-pause').onclick = () => {
-  if (!player || !playerReady) return;
+  if (!player || !playerReady || freeVideoId) return;
   if (state.night.paused_at) player.playVideo();
   else player.pauseVideo();
   // O onStateChange do player avisa o banco (mantém a estimativa certa).
@@ -251,6 +253,64 @@ $('btn-end-night').onclick = () => {
   run(() => rpc('dj_end_night'), 'Noite encerrada.');
 };
 
+// ---------------------------------------------------------------
+// Tocar livre: o DJ toca o que quiser, quando quiser.
+// Só no player dele: não grava nada no banco, não aparece na TV
+// nem no celular dos clientes, não mexe na fila.
+// ---------------------------------------------------------------
+let freeResults = [];
+
+$('free-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const q = $('free-input').value.trim();
+  if (q.length < 2) return;
+  $('free-hint').textContent = 'Buscando…';
+  $('free-results').innerHTML = '';
+  try {
+    freeResults = await searchYouTube(q, $('free-kind').value);
+    $('free-hint').textContent = freeResults.length ? '' : 'Nada encontrado. Tente outro termo.';
+    $('free-results').innerHTML = freeResults.map((r, i) => `
+      <li class="row free-result" data-index="${i}">
+        <img class="thumb" src="${esc(r.thumbnail)}" alt="" loading="lazy">
+        <span class="grow">
+          <span class="title">${esc(r.title)}</span>
+          <span class="sub">${esc(r.channel)} · ${formatDuration(r.durationSeconds * 1000)}</span>
+        </span>
+        <button class="btn btn-primary" type="button">Tocar agora</button>
+      </li>`).join('');
+  } catch (err) {
+    $('free-hint').textContent = err.message;
+  }
+};
+
+$('free-results').onclick = (e) => {
+  const btn = e.target.closest('button');
+  if (!btn || !playerReady) return;
+  const r = freeResults[Number(btn.closest('[data-index]').dataset.index)];
+  freeVideoId = r.videoId;
+  player.loadVideoById(r.videoId);
+  $('free-title-now').textContent = r.title;
+  $('free-playing').classList.remove('hidden');
+  $('free-results').innerHTML = '';
+  $('free-input').value = '';
+  renderNow();
+};
+
+// Sai do modo livre. reloadQueue: volta a carregar quem está no palco (sem dar play).
+function stopFree(reloadQueue = true) {
+  if (!freeVideoId) return;
+  freeVideoId = null;
+  $('free-playing').classList.add('hidden');
+  if (playerReady) {
+    player.stopVideo();
+    loadedRequestId = null;
+    if (reloadQueue) syncPlayer();
+  }
+  renderNow();
+}
+
+$('btn-free-stop').onclick = () => stopFree(true);
+
 $('btn-login').onclick = () => signInWithGoogle();
 const logout = async () => { await signOut(); location.reload(); };
 $('btn-logout').onclick = logout;
@@ -274,7 +334,7 @@ window.onYouTubeIframeAPIReady = () => {
 if (window.YT?.Player) window.onYouTubeIframeAPIReady();
 
 function syncPlayer() {
-  if (!playerReady) return;
+  if (!playerReady || freeVideoId) return; // tocando livre: o DJ manda no player
   const p = state.playing;
   if (!p) {
     if (loadedRequestId) { player.stopVideo(); loadedRequestId = null; }
@@ -290,6 +350,14 @@ function syncPlayer() {
 function onPlayerState(e) {
   const night = state.night;
   if (!night) return;
+  if (freeVideoId) {
+    // Tocando livre: nada vai para o banco. Só repete, se pedido.
+    if (e.data === YT.PlayerState.ENDED && $('free-loop').checked) {
+      player.seekTo(0);
+      player.playVideo();
+    }
+    return;
+  }
   if (e.data === YT.PlayerState.PAUSED && !night.paused_at) {
     rpc('dj_pause', { p_paused: true }).catch((err) => toast(err.message, 'error'));
   }
