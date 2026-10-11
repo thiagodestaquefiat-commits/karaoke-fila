@@ -77,3 +77,5 @@ html, body { height: 100%; overflow: hidden; cursor: none; }
   display: flex; align-items: center; justify-content: center; padding: 6vw; text-align: center;
   background: #000; color: var(--muted); font-size: clamp(16px, 2vw, 30px); font-weight: 600;
 }
+.activate-msg:empty { display: none; }
+.tv-activate .activate-msg { color: var(--yellow); font-weight: 700; }

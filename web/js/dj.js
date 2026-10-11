@@ -377,7 +377,7 @@ function currentVideo() {
 
 $('btn-tv').onclick = () => {
   if (tv.win && !tv.win.closed) { tv.win.focus(); return; }
-  const url = `tv.html?player=1${DEMO ? '&demo=1' : ''}`;
+  const url = `tv.html${DEMO ? '?demo=1' : ''}`;
   tv.win = window.open(url, 'karaoke-tv', 'popup,width=1280,height=720');
   if (!tv.win) toast('O navegador bloqueou a janela. Libere pop-ups para este site e tente de novo.', 'error');
   else toast('Arraste a janela para a TV e clique em "Ligar vídeo e som da TV".');
@@ -386,6 +386,12 @@ $('btn-tv').onclick = () => {
 function onTvMessage(m) {
   if (!m.type?.startsWith('tv-')) return;
   tv.lastSeen = Date.now();
+  if (m.type === 'tv-claim') {
+    // Uma janela da TV acabou de ser ativada: manda para ela o que está no palco.
+    if (!tv.connected) onTvConnected();
+    else resendToTv();
+    return;
+  }
   if (!tv.connected) onTvConnected();
   if (m.type === 'tv-state') handleVideoState(m.state);
   if (m.type === 'tv-progress') { tv.time = m.time; tv.duration = m.duration; renderTvArea(); }
@@ -407,9 +413,25 @@ function onTvConnected() {
     player.stopVideo();
   }
   const video = currentVideo();
-  if (video) tvLink.post({ type: 'load', ...video, autoplay: wasPlaying, start });
+  if (video && playerReady && start > 0) tvLink.post({ type: 'load', ...video, autoplay: wasPlaying, start });
+  else resendToTv();
   toast('TV conectada. O vídeo agora toca na TV, em tela cheia.');
   renderNow();
+}
+
+// Manda para a TV a música do palco (ou o Tocar livre), do ponto em que está.
+function resendToTv() {
+  const video = currentVideo();
+  if (!video) return;
+  let start = 0;
+  let autoplay = true;
+  const night = state.night;
+  if (!freeVideo && state.playing && night?.current_started_at) {
+    const ref = night.paused_at ? Date.parse(night.paused_at) : Date.now();
+    start = Math.max(0, (ref - Date.parse(night.current_started_at)) / 1000);
+    autoplay = !night.paused_at && !DEMO; // no demo, a TV espera o Próxima
+  }
+  tvLink.post({ type: 'load', ...video, autoplay, start });
 }
 
 function onTvDisconnected() {

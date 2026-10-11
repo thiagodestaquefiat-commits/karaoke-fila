@@ -1,9 +1,9 @@
 // Tela da TV: quem está cantando, próximos 3 com horário e QR code.
 // Não precisa de login (só lê a fila).
 //
-// Aberta como tv.html?player=1 (botão "Abrir TV" do painel), esta janela
-// também é o PLAYER: quando alguém canta, mostra só o vídeo do YouTube em
-// tela cheia, com o som. O painel do DJ, no mesmo notebook, comanda.
+// Depois do clique em "Ligar vídeo e som da TV", esta janela também é o
+// PLAYER: quando alguém canta, mostra só o vídeo do YouTube em tela cheia,
+// com o som. O painel do DJ, no mesmo notebook, comanda.
 import { loadState, subscribeToChanges, esc, DEMO } from './supabase.js';
 import { openTvLink } from './tvlink.js';
 import { computeSchedule, formatWait } from './estimate.js';
@@ -60,9 +60,13 @@ subscribeToChanges(refresh);
 setInterval(render, 30000);
 
 // =====================================================================
-// TV como player do vídeo (tv.html?player=1)
+// TV como player do vídeo. Qualquer janela da TV vira o player depois do
+// clique em "Ligar vídeo e som da TV" (aberta pelo botão Abrir TV do painel
+// ou digitando o endereço). Se houver mais de uma janela de TV aberta no
+// mesmo navegador, só a ÚLTIMA ativada toca; as outras só mostram a fila.
 // =====================================================================
-const isPlayer = new URLSearchParams(location.search).has('player');
+const isPlayer = true;
+let activeAt = 0;        // quando esta janela virou a TV que toca (0 = não toca)
 
 let yt = null;           // YT.Player (criado só na hora de tocar, já visível)
 let ytReady = false;
@@ -71,23 +75,43 @@ let wanted = null;       // vídeo esperando o player do YouTube ficar pronto
 let watchdog = null;     // confere se o vídeo começou mesmo
 let activated = DEMO;    // o navegador só libera som depois de um clique
 let current = null;      // vídeo da vez { videoId, title, duration }
-let pending = null;      // comando que chegou antes do clique de liberar o som
 const fake = { playing: false, time: 0 }; // modo demo: vídeo de mentira
 
-const link = isPlayer ? openTvLink(onCommand) : null;
+const link = openTvLink(onCommand);
 
-if (isPlayer) {
+// Só a janela que toca avisa o painel que está aberta.
+setInterval(() => { if (activeAt) link.post({ type: 'tv-hello' }); }, 2000);
+setInterval(reportProgress, 1000);
+if (DEMO) becomeActive();
+else $('tv-activate').classList.remove('hidden');
+
+// Esta janela passa a ser a TV que toca. O painel responde mandando a
+// música que estiver no palco, do ponto em que ela está.
+function becomeActive() {
+  activated = true;
+  activeAt = Date.now();
+  $('tv-activate').classList.add('hidden');
+  link.post({ type: 'tv-claim', at: activeAt });
   link.post({ type: 'tv-hello' });
-  setInterval(() => link.post({ type: 'tv-hello' }), 2000);
-  if (!activated) $('tv-activate').classList.remove('hidden');
-  setInterval(reportProgress, 1000);
+}
+
+// Outra janela da TV foi ativada depois desta: esta para de tocar.
+function standDown() {
+  activeAt = 0;
+  current = null;
+  wanted = null;
+  fake.playing = false;
+  clearTimeout(watchdog);
+  showLoading('');
+  if (!DEMO) yt?.stopVideo?.();
+  showVideo(false);
+  $('activate-msg').textContent = 'Outra janela da TV está tocando os vídeos agora. Para usar esta, clique abaixo.';
+  $('tv-activate').classList.remove('hidden');
 }
 
 $('btn-activate').onclick = async () => {
-  activated = true;
-  $('tv-activate').classList.add('hidden');
+  becomeActive();
   try { await document.documentElement.requestFullscreen(); } catch (_) { /* F11 resolve */ }
-  if (pending) { const m = pending; pending = null; onCommand(m); }
 };
 
 function showVideo(on) {
@@ -181,18 +205,22 @@ window.onYouTubeIframeAPIReady = () => {
 if (window.YT?.Player && wanted) createPlayer();
 
 function onCommand(m) {
+  // Outra janela da TV foi ativada: a mais nova é quem toca.
+  if (m.type === 'tv-claim') {
+    if (activeAt && m.at > activeAt) standDown();
+    return;
+  }
+  // Janela que não está tocando ignora os comandos do painel.
+  if (!activeAt) return;
+
   switch (m.type) {
     case 'who':
       link.post({ type: 'tv-hello' });
       break;
 
     case 'load':
-      // Ainda sem o clique que libera o som: guarda para depois.
-      if (!activated) {
-        pending = m;
-        $('tv-activate').classList.remove('hidden');
-        return;
-      }
+      // Já está tocando esse mesmo vídeo (ex.: o painel foi recarregado): não recomeça.
+      if (!DEMO && m.autoplay && yt && ytReady && ytVideoId === m.videoId && yt.getPlayerState?.() === 1) return;
       current = { videoId: m.videoId, title: m.title || '', duration: m.duration || 0 };
       if (DEMO) {
         showVideo(!!m.autoplay);
@@ -229,7 +257,6 @@ function onCommand(m) {
       break;
 
     case 'stop':
-      pending = null;
       current = null;
       wanted = null;
       fake.playing = false;
@@ -243,7 +270,7 @@ function onCommand(m) {
 
 // Conta para o painel em que ponto está o vídeo (barra de andamento do DJ).
 function reportProgress() {
-  if (!current) return;
+  if (!current || !activeAt) return;
   if (DEMO) {
     const dur = current.duration || 240;
     if (fake.playing) {

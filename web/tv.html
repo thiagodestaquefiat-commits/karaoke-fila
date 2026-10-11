@@ -37,7 +37,7 @@
     </aside>
   </main>
 
-  <!-- Vídeo em tela cheia (só quando esta janela é o player da TV: tv.html?player=1) -->
+  <!-- Vídeo em tela cheia (depois do clique em "Ligar vídeo e som da TV") -->
   <div id="tv-video" class="tv-video hidden">
     <div id="tv-player"></div>
     <div id="tv-loading" class="tv-loading hidden" aria-live="polite"></div>
@@ -47,6 +47,7 @@
   <!-- O navegador só libera som depois de um clique nesta janela -->
   <div id="tv-activate" class="tv-activate hidden">
     <img class="logo tv-activate-logo" data-logo alt="">
+    <p id="activate-msg" class="activate-msg"></p>
     <button id="btn-activate" class="btn btn-primary tv-activate-btn" type="button">Ligar vídeo e som da TV</button>
     <p>Clique uma vez para o navegador liberar o som.<br>A janela entra em tela cheia; se não entrar, aperte F11.</p>
   </div>
