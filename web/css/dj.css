@@ -51,11 +51,30 @@
 .up-next { display: flex; flex-direction: column; gap: 4px; }
 .up-next strong { font-size: 18px; }
 
-/* Linha da fila do DJ */
-.q-row { flex-wrap: wrap; }
-.q-row .eta { display: flex; flex-direction: column; align-items: flex-end; font-size: 13px; }
+/* Linha da fila do DJ: nome + horário em cima, música embaixo, botões numa linha */
+.q-row {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  grid-template-areas: "pos info eta" "pos tools tools";
+  column-gap: 10px; row-gap: 8px; align-items: center;
+  padding: 10px 12px;
+}
+.q-row .pos { grid-area: pos; align-self: start; padding-top: 1px; }
+.q-row .grow { grid-area: info; }
+.q-row .name-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.q-row .name-line .title { min-width: 0; }
+.q-row .eta {
+  grid-area: eta; align-self: start;
+  display: flex; flex-direction: column; align-items: flex-end; font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
 .q-row .eta strong { font-size: 15px; }
-.q-row .tools { display: flex; gap: 4px; flex-wrap: wrap; width: 100%; justify-content: flex-end; }
+.q-row .tools { grid-area: tools; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.q-row .tools .danger { margin-left: auto; }
+.q-row .btn-icon { width: 36px; height: 36px; }
+.q-row .btn-text { min-height: 36px; padding: 0 10px; }
+.q-row .btn-icon:hover:not(:disabled), .q-row .btn-text:hover:not(:disabled) { background: var(--line); }
+.q-row button:disabled { opacity: 0.3; }
 .btn-text {
   min-height: 44px; padding: 0 12px; border-radius: 10px; border: 0;
   background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 13px;
@@ -66,7 +85,7 @@
 .check { display: flex; align-items: center; gap: 10px; min-height: 52px; font-size: 14px; font-weight: 600; cursor: pointer; }
 .check input { width: 22px; height: 22px; accent-color: var(--pink); }
 
-.round { align-self: flex-start; margin-top: 2px; }
+.round { flex-shrink: 0; }
 .round.first { background: var(--green); color: #141118; }
 
 /* Tocar livre (só no player do DJ) */
@@ -85,3 +104,53 @@
 .free-result { flex-wrap: wrap; }
 .free-result .btn { min-height: 44px; padding: 0 14px; font-size: 14px; margin-left: auto; }
 #free-hint:empty { display: none; }
+
+/* =====================================================================
+   Notebook / computador: tudo cabe na tela, sem a página rolar.
+   A fila rola por dentro; o player se ajusta à altura da tela para o
+   "Cantando agora" e o botão Próxima ficarem sempre visíveis.
+   ===================================================================== */
+@media (min-width: 900px) and (min-height: 560px) {
+  html, body { height: 100%; overflow: hidden; }
+
+  .panel {
+    height: 100dvh; max-width: none;
+    padding: 12px 18px 16px; gap: 12px;
+  }
+  .panel-head { flex-wrap: nowrap; }
+  .logo-md { width: 44px; height: 44px; }
+  .venue { font-size: 20px; }
+  .chip { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+  .head-actions .btn { min-height: 42px; }
+
+  .settings { flex-shrink: 0; }
+
+  .panel-body {
+    flex: 1; min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 31vw, 480px);
+    gap: 16px; align-items: stretch;
+  }
+
+  /* Coluna do palco: rola por dentro se precisar (o Tocar livre fica embaixo) */
+  .stage { min-height: 0; overflow-y: auto; gap: 12px; padding-right: 2px; scrollbar-width: thin; }
+  .player-box {
+    flex-shrink: 0;
+    width: min(100%, calc((100dvh - 250px) * 16 / 9));
+    align-self: center;
+  }
+  .now { flex-shrink: 0; padding: 12px 16px; }
+  .now-singer { font-size: 26px; }
+  .now-actions .btn { min-height: 48px; }
+  .up-next { display: none !important; } /* o 1º da fila já aparece na coluna da direita */
+
+  /* Coluna da fila: altura da tela, lista rola por dentro */
+  .queue-col { min-height: 0; overflow: hidden; padding: 14px; }
+  .queue-col #queue { flex: 1; min-height: 0; overflow-y: auto; padding-right: 2px; scrollbar-width: thin; }
+}
+
+/* Telas de notebook baixas (720px de altura ou menos) */
+@media (min-width: 900px) and (max-height: 740px) {
+  .q-row .sub { font-size: 12px; }
+  .q-row { padding: 8px 10px; row-gap: 6px; }
+}

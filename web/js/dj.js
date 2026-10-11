@@ -149,9 +149,11 @@ function renderQueue() {
     <li class="row q-row" data-id="${r.id}">
       <span class="pos">${r.index + 1}</span>
       <span class="grow">
-        <span class="title">${esc(r.singer_name)}</span>
+        <span class="name-line">
+          <span class="title">${esc(r.singer_name)}</span>
+          <span class="badge round ${r.round > 1 ? '' : 'first'}">${r.round > 1 ? `${r.round}ª música` : '1ª vez'}</span>
+        </span>
         <span class="sub">${esc(r.title)} · ${formatSongLength(r.duration_seconds)}</span>
-        <span class="badge round ${r.round > 1 ? '' : 'first'}">${r.round > 1 ? `${r.round}ª música` : '1ª vez'}</span>
         ${r.absent_count > 0 ? '<span class="sub absent">Já foi chamado e não estava</span>' : ''}
       </span>
       <span class="eta">
@@ -159,16 +161,20 @@ function renderQueue() {
         <span class="muted">${formatWait(r.startsInMs)}</span>
       </span>
       <span class="tools">
-        <button class="btn-icon" type="button" data-act="up" aria-label="Subir ${esc(r.singer_name)}" ${r.index === 0 ? 'disabled' : ''}>
+        <button class="btn-icon" type="button" data-act="up" title="Subir uma posição" aria-label="Subir ${esc(r.singer_name)}" ${r.index === 0 ? 'disabled' : ''}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
         </button>
-        <button class="btn-icon" type="button" data-act="down" aria-label="Descer ${esc(r.singer_name)}" ${r.index === last ? 'disabled' : ''}>
+        <button class="btn-icon" type="button" data-act="down" title="Descer uma posição" aria-label="Descer ${esc(r.singer_name)}" ${r.index === last ? 'disabled' : ''}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </button>
-        <button class="btn-text" type="button" data-act="top" ${r.index === 0 ? 'disabled' : ''}>Topo</button>
-        <button class="btn-text" type="button" data-act="bottom" ${r.index === last ? 'disabled' : ''}>Fim</button>
-        <button class="btn-text warn" type="button" data-act="absent">Não está aqui</button>
-        <button class="btn-icon danger" type="button" data-act="remove" aria-label="Remover ${esc(r.singer_name)}">
+        <button class="btn-icon" type="button" data-act="top" title="Mandar para o topo" aria-label="Mandar ${esc(r.singer_name)} para o topo" ${r.index === 0 ? 'disabled' : ''}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12M12 20V9M7 14l5-5 5 5"/></svg>
+        </button>
+        <button class="btn-icon" type="button" data-act="bottom" title="Mandar para o fim" aria-label="Mandar ${esc(r.singer_name)} para o fim" ${r.index === last ? 'disabled' : ''}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20h12M12 4v11M7 10l5 5 5-5"/></svg>
+        </button>
+        <button class="btn-text warn" type="button" data-act="absent" title="Desce 3 posições. Na segunda vez, sai da fila.">Não está aqui</button>
+        <button class="btn-icon danger" type="button" data-act="remove" title="Remover da fila" aria-label="Remover ${esc(r.singer_name)}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </span>
