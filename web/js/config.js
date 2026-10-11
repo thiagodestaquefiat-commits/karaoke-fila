@@ -1,7 +1,8 @@
 // Preencha com os dados do SEU projeto Supabase
 // (Project Settings > API). A "anon key" é pública, pode ficar no front.
-export const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-export const SUPABASE_ANON_KEY = 'COLE-AQUI-A-ANON-KEY';
+export const SUPABASE_URL = 'https://zkkxvvtmxsoubnicrxki.supabase.co';
+export const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpra3h2dnRteHNvdWJuaWNyeGtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE3MjQ5ODgsImV4cCI6MjEwNzMwMDk4OH0.eGAiZGJU-CYCIwcSo_ABC-tl7k-PnG5PGoJRrec99vo';
 
 // ---------- Marca do bar ----------
 // Nome que aparece no topo das telas.
