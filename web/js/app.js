@@ -260,7 +260,9 @@ $('results').onclick = (e) => {
   // No modo demo os vídeos são de mentira: mostra só a miniatura.
   $('preview').src = DEMO
     ? 'about:blank'
-    : `https://www.youtube-nocookie.com/embed/${encodeURIComponent(r.videoId)}?rel=0&modestbranding=1`;
+    // Player normal do YouTube (não o "nocookie"): ele reconhece a conta da pessoa,
+    // então quem tem YouTube Premium não vê propaganda na prévia.
+    : `https://www.youtube.com/embed/${encodeURIComponent(r.videoId)}?rel=0&modestbranding=1&playsinline=1`;
   $('preview').style.background = DEMO ? `center / cover url("${r.thumbnail}")` : '';
   setTab('confirm');
 };
