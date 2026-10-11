@@ -484,6 +484,19 @@ grant execute on function
 to authenticated;
 
 -- ---------------------------------------------------------------------
+-- 6b. PERMISSÕES DAS TABELAS
+-- Dadas de forma explícita, para funcionar mesmo com a opção
+-- "Expor automaticamente novas tabelas" DESMARCADA no Supabase.
+-- O RLS (item 3) continua decidindo quais LINHAS cada um enxerga.
+-- ---------------------------------------------------------------------
+grant usage on schema public to anon, authenticated, service_role;
+
+grant select on public.nights, public.requests to anon, authenticated;
+grant select on public.profiles to authenticated;
+
+grant all on public.profiles, public.nights, public.requests, public.search_cache to service_role;
+
+-- ---------------------------------------------------------------------
 -- 7. TEMPO REAL (celulares, painel e TV atualizam sozinhos)
 -- ---------------------------------------------------------------------
 alter publication supabase_realtime add table public.requests, public.nights;
