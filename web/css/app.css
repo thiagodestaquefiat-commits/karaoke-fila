@@ -28,7 +28,7 @@
 
 .search-box {
   display: flex; align-items: center; gap: 8px;
-  background: var(--surface); border: 1px solid #3a3345; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 4px 4px 4px 14px; color: var(--muted);
 }
 .search-box:focus-within { border-color: var(--yellow); }
@@ -41,7 +41,7 @@
 .result {
   width: 100%; text-align: left; color: var(--text);
 }
-.result:hover:not(:disabled) { border-color: #4a4257; }
+.result:hover:not(:disabled) { border-color: var(--muted); }
 
 .banner {
   background: var(--yellow); color: #141118;
@@ -59,7 +59,7 @@
   border-radius: 20px; padding: 20px;
   display: flex; flex-direction: column; gap: 6px;
 }
-.status-card.turn { background: var(--pink); }
+.status-card.turn { background: var(--pink); color: var(--on-primary, #141118); }
 .status-card.idle { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
 .status-card .big {
   font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1; letter-spacing: -0.03em;
@@ -67,7 +67,7 @@
 .status-card .song { font-weight: 700; font-size: 15px; }
 .status-card .actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .status-card .btn-cancel {
-  background: rgba(20, 17, 24, 0.12); color: #141118; min-height: 44px; border-radius: 12px; border: 0;
+  background: rgba(0, 0, 0, 0.12); color: #141118; min-height: 44px; border-radius: 12px; border: 0;
   padding: 0 14px; font-weight: 700;
 }
 
@@ -78,7 +78,7 @@
   position: fixed; left: 0; right: 0; bottom: 0;
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
   padding: 10px 16px calc(14px + env(safe-area-inset-bottom));
-  background: #1a1620; border-top: 1px solid var(--surface-2);
+  background: var(--surface); border-top: 1px solid var(--surface-2);
   max-width: 560px; margin: 0 auto;
 }
 .tab {

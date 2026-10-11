@@ -1,13 +1,28 @@
 {
-  "name": "Karaokê · Pedir música",
-  "short_name": "Karaokê",
+  "name": "Karaokê do Duvi · Pedir música",
+  "short_name": "Karaokê Duvi",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#141118",
-  "theme_color": "#141118",
+  "background_color": "#15100e",
+  "theme_color": "#15100e",
   "lang": "pt-BR",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "img/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

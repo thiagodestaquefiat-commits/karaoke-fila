@@ -345,8 +345,8 @@ async function notifyOnce(key, title, body) {
   if ('Notification' in window && Notification.permission === 'granted') {
     try {
       const reg = await navigator.serviceWorker?.getRegistration();
-      if (reg) reg.showNotification(title, { body, icon: 'icon.svg', tag: key });
-      else new Notification(title, { body, icon: 'icon.svg', tag: key });
+      if (reg) reg.showNotification(title, { body, icon: 'img/icon-192.png', tag: key });
+      else new Notification(title, { body, icon: 'img/icon-192.png', tag: key });
     } catch (err) {
       console.warn('Notificação falhou', err);
     }

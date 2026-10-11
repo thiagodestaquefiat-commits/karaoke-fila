@@ -1,21 +1,24 @@
 /* =====================================================================
-   Marca do bar: troque só estas cores para personalizar o karaokê.
-   (As telas inteiras usam estas variáveis.)
+   Marca: Duvidoso Bar — Arte · Música · Cultura · Rango
+   Vermelho da logo + âmbar da iluminação do bar sobre fundo escuro quente.
+   Troque só estas cores para personalizar o karaokê para outro bar.
    ===================================================================== */
 :root {
-  --bg: #141118;        /* fundo */
-  --surface: #1f1b26;   /* cartões */
-  --surface-2: #2a2533; /* botões secundários */
-  --line: #2e2838;      /* bordas */
-  --text: #f4f0f7;      /* texto */
-  --muted: #b3a9bf;     /* texto secundário */
-  --pink: #ff5c8a;      /* cor principal (botões, "sua vez") */
-  --pink-soft: #ff8fae; /* destaques ("cantando agora") */
-  --yellow: #ffd166;    /* cor de apoio (posição na fila, "prepara!") */
-  --green: #7ee0a8;     /* "pedidos abertos", "1ª vez" */
+  --bg: #15100e;          /* fundo (preto quente) */
+  --surface: #221915;     /* cartões */
+  --surface-2: #30241e;   /* botões secundários */
+  --line: #3d2e26;        /* bordas */
+  --text: #f7f1ea;        /* texto */
+  --muted: #bfb0a3;       /* texto secundário */
+
+  --pink: #a8323a;        /* cor principal = vermelho da logo (botões, "sua vez") */
+  --on-primary: #ffffff;  /* texto em cima da cor principal */
+  --pink-soft: #ff7a7f;   /* destaques ("cantando agora") */
+  --yellow: #f5b841;      /* âmbar das luzes (posição na fila, "prepara!") */
+  --green: #8bd3a0;       /* "pedidos abertos", "1ª vez" */
 }
 
 /* Logo */
 .logo { display: block; object-fit: contain; }
-.logo-hero { width: min(240px, 60vw); height: auto; max-height: 240px; }
+.logo-hero { width: min(200px, 55vw); height: auto; filter: drop-shadow(0 10px 30px rgba(168, 50, 58, 0.45)); }
 .logo-sm { width: 40px; height: 40px; }
