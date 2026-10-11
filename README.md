@@ -70,7 +70,8 @@ As duas janelas conversam direto pelo navegador do notebook (`BroadcastChannel`,
 
 O DJ pode tocar **qualquer coisa, a hora que quiser**: a música dele para cantar, um som de fundo enquanto vai ao banheiro, um mix entre uma música e outra. No card **Tocar livre** do painel, ele busca no YouTube ("Qualquer música" ou "Só karaokê") e aperta **Tocar agora**.
 
-- Toca **só no player do DJ**. Não grava nada no banco, não entra na fila e **não aparece para ninguém**, nem na TV nem no celular dos clientes.
+- Com a TV conectada, a música **aparece na TV em tela cheia**, igual às músicas da fila. Sem a TV, toca no player do painel.
+- Não grava nada no banco, não entra na fila e **não aparece no celular dos clientes**.
 - A opção **Repetir** deixa a música em loop, bom para som de fundo.
 - **Voltar para a fila** retorna o player para quem está no palco, sem dar play. **Próxima** também sai do modo livre e chama o próximo.
 

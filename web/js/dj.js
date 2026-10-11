@@ -275,8 +275,9 @@ $('btn-end-night').onclick = () => {
 
 // ---------------------------------------------------------------
 // Tocar livre: o DJ toca o que quiser, quando quiser.
-// Só no player dele: não grava nada no banco, não aparece na TV
-// nem no celular dos clientes, não mexe na fila.
+// Vai para a TV em tela cheia (ou para o player do painel, sem TV).
+// Não grava nada no banco, não mexe na fila e não aparece no
+// celular dos clientes.
 // ---------------------------------------------------------------
 let freeResults = [];
 let freeVideo = null; // { videoId, title, duration } do Tocar livre
