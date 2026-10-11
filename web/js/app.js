@@ -93,7 +93,7 @@ function render() {
   let bannerText = '';
   if (!night) bannerText = 'O karaokê ainda não começou. Você pode buscar, mas os pedidos abrem quando o DJ iniciar a noite.';
   else if (!night.is_open) bannerText = 'O DJ fechou os pedidos por enquanto.';
-  else if (mine) bannerText = 'Você já está na fila. Quando cantar, libera outro pedido.';
+  else if (mine) bannerText = 'Você já está na fila. Quando cantar, libera outro pedido (pode cantar quantas vezes quiser na noite).';
   banner.textContent = bannerText;
   banner.classList.toggle('hidden', !bannerText);
 
@@ -153,6 +153,9 @@ function renderMyStatus(schedule, mine) {
     <span class="big">${position === 1 && !state.playing ? 'Você é o próximo' : formatWait(item.startsInMs)}</span>
     <span>Por volta de <strong>${formatClock(item.startsAt)}</strong></span>
     <span class="song">${esc(mine.title)}</span>
+    ${mine.round > 1 && state.night?.prefer_new_singers !== false
+      ? '<span class="small">Quem ainda não cantou hoje passa na sua frente, então o horário pode mudar um pouco.</span>'
+      : ''}
     ${mine.absent_count > 0
       ? '<span class="small"><strong>O DJ te chamou e você não estava.</strong> Você desceu 3 posições. Se não estiver na próxima, sai da fila.</span>'
       : ''}

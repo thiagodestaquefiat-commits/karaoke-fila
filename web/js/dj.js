@@ -86,6 +86,7 @@ function render() {
 
   $('gap').value = String(night.gap_seconds);
   $('max-per-user').value = String(night.max_per_user);
+  $('prefer-new').checked = night.prefer_new_singers !== false;
 
   renderNow();
   renderQueue();
@@ -141,6 +142,7 @@ function renderQueue() {
       <span class="grow">
         <span class="title">${esc(r.singer_name)}</span>
         <span class="sub">${esc(r.title)} · ${formatSongLength(r.duration_seconds)}</span>
+        <span class="badge round ${r.round > 1 ? '' : 'first'}">${r.round > 1 ? `${r.round}ª música` : '1ª vez'}</span>
         ${r.absent_count > 0 ? '<span class="sub absent">Já foi chamado e não estava</span>' : ''}
       </span>
       <span class="eta">
@@ -230,6 +232,10 @@ $('gap').onchange = (e) =>
 
 $('max-per-user').onchange = (e) =>
   run(() => rpc('dj_update_night', { p_max_per_user: Number(e.target.value) }), 'Limite atualizado.');
+
+$('prefer-new').onchange = (e) =>
+  run(() => rpc('dj_set_prefer_new', { p_value: e.target.checked }),
+    e.target.checked ? 'Quem não cantou passa na frente.' : 'Ordem de chegada pura.');
 
 $('btn-settings').onclick = () => {
   const box = $('settings');

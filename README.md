@@ -34,6 +34,17 @@ tempo até cantar = o que falta da música atual
 - A **folga** (padrão 1 min 15 s) cobre o tempo de a pessoa subir, pegar o microfone etc. O DJ ajusta em *Ajustes*.
 - Pausar o vídeo pausa a contagem.
 
+### Quem ainda não cantou tem preferência (rodadas)
+
+Na noite toda não há limite de músicas, mas cada pessoa só tem **uma música na fila por vez**: depois de cantar, libera outra. Cada pedido ganha uma rodada (1ª música = rodada 1, 2ª = rodada 2...). Um pedido novo entra **depois de todos da mesma rodada e antes de quem já está numa rodada maior**.
+
+Exemplo: a fila é `Duda (1ª) > Thiago (2ª)`. Chega a Eva pela primeira vez e a fila fica `Duda > Eva > Thiago`.
+
+- Se o DJ reordena na mão, a escolha dele vale. Quem chega depois se encaixa respeitando o que ele fez.
+- O DJ vê em cada pedido se é a "1ª vez" ou a "2ª música".
+- Em **Ajustes**, o DJ pode desligar a regra e voltar para a ordem de chegada pura.
+- Quem está numa rodada maior vê no celular que o horário pode mudar se chegar gente nova.
+
 ### "Não está aqui"
 
 Na primeira vez, a pessoa desce 3 posições e vê um aviso no celular. Na segunda, sai da fila. Essa regra fica em `dj_not_here()` no SQL e pode ser combinada com o dono.
@@ -55,7 +66,7 @@ Se não der conta, dá para pedir aumento de cota ao Google (é gratuito, mas pa
 ### 1. Supabase
 
 1. Crie um projeto **novo** em [supabase.com](https://supabase.com).
-2. Abra **SQL Editor**, cole o conteúdo de `supabase/migrations/0001_init.sql` e rode.
+2. Abra o **SQL Editor** e rode, nesta ordem, o conteúdo de `supabase/migrations/0001_init.sql` e depois o de `0002_rodadas.sql`.
 3. Em **Project Settings › API**, copie a **Project URL** e a **anon public key** para `web/js/config.js`.
 
 ### 2. Login com Google
@@ -116,6 +127,7 @@ Endereços:
 ```
 supabase/
   migrations/0001_init.sql        tabelas, segurança (RLS) e funções da fila
+  migrations/0002_rodadas.sql     preferência para quem ainda não cantou
   functions/youtube-search/       busca no YouTube com cache e duração
 web/
   index.html  js/app.js           cliente
