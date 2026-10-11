@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="img/icon-192.png" type="image/png">
+<title>Karaokê do Duvi · Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+  /* Layout: celular | painel do DJ lado a lado, TV embaixo. Uma tela só, no escuro quente do bar. */
+  :root {
+    --bg: #0f0b0a;
+    --panel: #1b1411;
+    --line: #34271f;
+    --fg: #f7f1ea;
+    --muted: #bfb0a3;
+    --red: #a8323a;
+    --amber: #f5b841;
+    --display: 'Bricolage Grotesque', system-ui, sans-serif;
+    --body: 'Figtree', system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { font-family: var(--body); padding-inline: 16px; padding-block: 20px 40px; }
+
+  .wrap { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  .head { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; }
+  .head img { width: 56px; height: 56px; }
+  .head-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 320px; }
+  h1 { margin: 0; font-family: var(--display); font-weight: 800; font-size: clamp(22px, 3vw, 30px); letter-spacing: -0.02em; text-wrap: balance; }
+  .lead { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.45; max-width: 70ch; }
+  .tag {
+    font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #141118; background: var(--amber); padding: 6px 10px; border-radius: 999px; white-space: nowrap;
+  }
+
+  .tips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .tips li {
+    font-size: 13px; color: var(--muted); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 12px;
+  }
+  .tips strong { color: var(--fg); font-weight: 600; }
+
+  .stage { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+
+  .screen { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .screen-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .screen-label h2 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 700; }
+  .screen-label a { color: var(--amber); font-size: 13px; }
+  .screen-label a:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .phone { flex: 0 1 390px; }
+  .phone-frame {
+    width: 100%; max-width: 390px; aspect-ratio: 390 / 780;
+    border: 10px solid #2a201b; border-radius: 40px; overflow: hidden; background: #15100e;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+  .dj { flex: 1 1 560px; }
+  .dj-frame { height: 780px; max-height: 85vh; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .tv { flex: 1 1 100%; }
+  .tv-frame { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+
+  iframe { display: block; width: 100%; height: 100%; border: 0; background: #15100e; }
+
+  .note { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; max-width: 80ch; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <img src="img/logo.png" alt="Duvidoso Bar">
+    <div class="head-text">
+      <h1>Karaokê do Duvi · demonstração</h1>
+      <p class="lead">As três telas do sistema, ligadas na mesma fila. Peça uma música no celular e veja o pedido aparecer no painel do DJ e na TV na mesma hora.</p>
+    </div>
+    <span class="tag">Dados de exemplo</span>
+  </header>
+
+  <ul class="tips" aria-label="O que testar">
+    <li><strong>Celular:</strong> busque "Evidências" ou "Marília" e peça</li>
+    <li><strong>DJ:</strong> aperte Próxima, reordene, marque "Não está aqui"</li>
+    <li><strong>DJ:</strong> em Ajustes, feche os pedidos e veja o celular</li>
+    <li><strong>Celular:</strong> tente pedir uma segunda música</li>
+  </ul>
+
+  <div class="stage">
+    <section class="screen phone" aria-labelledby="t-phone">
+      <div class="screen-label"><h2 id="t-phone">Celular do cliente</h2><a href="index.html?demo=1" target="_blank" rel="noopener">Abrir sozinho</a></div>
+      <div class="phone-frame"><iframe id="f-phone" src="index.html?demo=1" title="App do cliente"></iframe></div>
+    </section>
+
+    <section class="screen dj" aria-labelledby="t-dj">
+      <div class="screen-label"><h2 id="t-dj">Painel do DJ</h2><a href="dj.html?demo=1" target="_blank" rel="noopener">Abrir sozinho</a></div>
+      <div class="dj-frame"><iframe id="f-dj" src="dj.html?demo=1" title="Painel do DJ"></iframe></div>
+    </section>
+
+    <section class="screen tv" aria-labelledby="t-tv">
+      <div class="screen-label"><h2 id="t-tv">TV do bar</h2><a href="tv.html?demo=1" target="_blank" rel="noopener">Abrir sozinho</a></div>
+      <div class="tv-frame"><iframe id="f-tv" src="tv.html?demo=1" title="Tela da TV"></iframe></div>
+    </section>
+  </div>
+
+  <p class="note">Nesta demonstração os vídeos do YouTube não tocam e a busca usa um catálogo de exemplo. No app de verdade, a busca é no YouTube, o login é com o Google e a fila fica salva no banco. Recarregar a página volta a fila ao começo.</p>
+</div>
+</body>
+</html>

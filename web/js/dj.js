@@ -3,6 +3,7 @@
 import {
   supabase, getUser, getMyProfile, signInWithGoogle, signOut,
   loadState, subscribeToChanges, rpc, esc, toast, searchYouTube,
+  DEMO, ask,
 } from './supabase.js';
 import { computeSchedule, formatDuration, formatWait, formatClock, formatSongLength } from './estimate.js';
 import { applyBrand } from './brand.js';
@@ -105,7 +106,14 @@ function renderNow() {
 
   $('now-singer').textContent = p ? p.singer_name : '—';
   $('now-song').textContent = p ? `${p.title} · ${formatSongLength(p.duration_seconds)}` : 'Ninguém no palco';
-  $('player-empty').classList.toggle('hidden', !!p || !!freeVideoId);
+  $('player-empty').classList.toggle('hidden', !DEMO && (!!p || !!freeVideoId));
+  if (DEMO) {
+    $('player-empty').innerHTML = freeVideoId
+      ? `<span>Modo demonstração<br><strong>Tocando livre: ${esc($('free-title-now').textContent)}</strong></span>`
+      : p
+        ? `<span>Modo demonstração: aqui toca o vídeo do YouTube<br><strong>${esc(p.title)}</strong></span>`
+        : '<span>Nada tocando. Toque em <strong>Próxima</strong> para chamar o primeiro da fila.</span>';
+  }
 
   if (p) {
     const secs = Math.round(schedule.remainingCurrentMs / 1000);
@@ -204,7 +212,7 @@ $('queue').onclick = (e) => {
           : `${req.singer_name} desceu 3 posições.`);
       break;
     case 'remove':
-      if (confirm(`Remover ${req.singer_name} (${req.title}) da fila?`)) {
+      if (ask(`Remover ${req.singer_name} (${req.title}) da fila?`)) {
         run(() => rpc('dj_remove', { p_id: id }), 'Removido da fila.');
       }
       break;
@@ -219,6 +227,10 @@ $('btn-next').onclick = () => {
 };
 
 $('btn-pause').onclick = () => {
+  if (DEMO && state.playing) { // demo: sem player, avisa o banco direto
+    run(() => rpc('dj_pause', { p_paused: !state.night.paused_at }));
+    return;
+  }
   if (!player || !playerReady || freeVideoId) return;
   if (state.night.paused_at) player.playVideo();
   else player.pauseVideo();
@@ -249,7 +261,7 @@ $('btn-start-night').onclick = () =>
   run(() => rpc('dj_start_night', { p_title: $('night-title').value }), 'Noite começou!');
 
 $('btn-end-night').onclick = () => {
-  if (!confirm('Encerrar a noite? A fila atual será fechada.')) return;
+  if (!ask('Encerrar a noite? A fila atual será fechada.')) return;
   run(() => rpc('dj_end_night'), 'Noite encerrada.');
 };
 
@@ -285,10 +297,10 @@ $('free-form').onsubmit = async (e) => {
 
 $('free-results').onclick = (e) => {
   const btn = e.target.closest('button');
-  if (!btn || !playerReady) return;
+  if (!btn || (!playerReady && !DEMO)) return;
   const r = freeResults[Number(btn.closest('[data-index]').dataset.index)];
   freeVideoId = r.videoId;
-  player.loadVideoById(r.videoId);
+  if (playerReady) player.loadVideoById(r.videoId);
   $('free-title-now').textContent = r.title;
   $('free-playing').classList.remove('hidden');
   $('free-results').innerHTML = '';

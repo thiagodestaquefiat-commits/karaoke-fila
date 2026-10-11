@@ -11,7 +11,13 @@ const state = { night: null, playing: null, queue: [] };
 
 // QR code apontando para a tela do cliente (mesmo site, index.html).
 const clientUrl = new URL('index.html', window.location.href).href;
-new QRCode($('qr'), { text: clientUrl, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M });
+// Se a biblioteca do QR não carregar (sem internet), a TV continua funcionando.
+if (window.QRCode) {
+  new QRCode($('qr'), { text: clientUrl, width: 512, height: 512, correctLevel: QRCode.CorrectLevel.M });
+} else {
+  $('qr').textContent = clientUrl;
+  $('qr').classList.add('qr-fallback');
+}
 
 async function refresh() {
   try {

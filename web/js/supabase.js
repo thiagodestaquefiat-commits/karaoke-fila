@@ -1,12 +1,22 @@
 // Conexão com o Supabase + funções que as três telas usam.
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { demo, demoSearch } from './demo.js';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Modo demonstração: liga sozinho enquanto o config.js tem a URL de exemplo,
+// ou com ?demo=1 no endereço. Usa dados de exemplo (veja demo.js).
+export const DEMO =
+  SUPABASE_URL.includes('SEU-PROJETO') || new URLSearchParams(location.search).has('demo');
+
+// A biblioteca do Supabase só é baixada no modo real.
+export const supabase = DEMO
+  ? { auth: { onAuthStateChange() {} } }
+  : (await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm'))
+      .createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ---------- Login ----------
 
 export async function getUser() {
+  if (DEMO) return demo.getUser();
   const { data } = await supabase.auth.getSession();
   return data.session?.user ?? null;
 }
@@ -18,10 +28,12 @@ export function signInWithGoogle() {
 }
 
 export function signOut() {
+  if (DEMO) return Promise.resolve();
   return supabase.auth.signOut();
 }
 
 export async function getMyProfile() {
+  if (DEMO) return demo.getMyProfile();
   const user = await getUser();
   if (!user) return null;
   const { data } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
@@ -58,6 +70,7 @@ export async function fetchQueue(nightId) {
 
 // Carrega tudo de uma vez: noite + fila.
 export async function loadState() {
+  if (DEMO) return demo.loadState();
   const night = await fetchActiveNight();
   if (!night) return { night: null, playing: null, queue: [] };
   const { playing, queue } = await fetchQueue(night.id);
@@ -72,6 +85,7 @@ export function subscribeToChanges(onChange) {
     clearTimeout(timer);
     timer = setTimeout(onChange, 150);
   };
+  if (DEMO) return demo.subscribe(debounced);
   const channel = supabase
     .channel('karaoke-fila')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, debounced)
@@ -88,6 +102,7 @@ export function subscribeToChanges(onChange) {
 
 // Chama uma função do banco e transforma o erro numa mensagem legível.
 export async function rpc(name, params = {}) {
+  if (DEMO) return demo.rpc(name, params);
   const { data, error } = await supabase.rpc(name, params);
   if (error) throw new Error(error.message);
   return data;
@@ -96,6 +111,7 @@ export async function rpc(name, params = {}) {
 // Busca no YouTube pela Edge Function.
 // mode: 'karaoke' (padrão) ou 'background' (qualquer música, usado no "Tocar livre" do DJ).
 export async function searchYouTube(q, mode = 'karaoke') {
+  if (DEMO) return demoSearch(q, mode);
   const { data, error } = await supabase.functions.invoke('youtube-search', { body: { q, mode } });
   if (error) {
     let message = 'Não foi possível buscar agora.';
@@ -133,4 +149,10 @@ export function toast(message, kind = 'info') {
   box.classList.add('show');
   clearTimeout(box._t);
   box._t = setTimeout(() => box.classList.remove('show'), 3500);
+}
+
+// Pergunta de confirmação. No modo demo pula a pergunta, porque a página de
+// demonstração roda num ambiente que não mostra janelas de confirmação.
+export function ask(message) {
+  return DEMO ? true : window.confirm(message);
 }

@@ -10,6 +10,12 @@ Tudo se atualiza em tempo real: quando o DJ mexe na fila, o celular de cada pess
 
 ---
 
+## Ver funcionando agora (modo demonstração)
+
+Enquanto o `web/js/config.js` estiver com a URL de exemplo, o app roda em **modo demonstração**: tudo funciona dentro do navegador, com dados de exemplo e sem Supabase. Abra **`web/demo.html`**, que mostra o celular, o painel do DJ e a TV lado a lado e ligados na mesma fila. Com o app já configurado, dá para forçar a demonstração colocando `?demo=1` no endereço de qualquer tela.
+
+No modo demo, os vídeos não tocam, a busca usa um catálogo de exemplo e recarregar a página volta a fila ao começo. As regras da fila são as mesmas do banco.
+
 ## Como funciona
 
 ```

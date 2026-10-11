@@ -2,6 +2,7 @@
 import {
   supabase, getUser, getMyProfile, signInWithGoogle, signOut,
   loadState, subscribeToChanges, rpc, searchYouTube, esc, toast,
+  DEMO, ask,
 } from './supabase.js';
 import { computeSchedule, formatWait, formatClock, formatDuration, formatSongLength } from './estimate.js';
 import { NOTIFY_WHEN_POSITION, NOTIFY_WHEN_MINUTES } from './config.js';
@@ -212,7 +213,7 @@ function renderQueue(schedule) {
 $('btn-login').onclick = () => signInWithGoogle();
 
 $('btn-logout').onclick = async () => {
-  if (!confirm('Sair da sua conta?')) return;
+  if (!ask('Sair da sua conta?')) return;
   await signOut();
   location.reload();
 };
@@ -256,7 +257,11 @@ $('results').onclick = (e) => {
   state.selected = r;
   $('confirm-title').textContent = r.title;
   $('confirm-sub').textContent = `${r.channel} · ${formatSongLength(r.durationSeconds)}`;
-  $('preview').src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(r.videoId)}?rel=0&modestbranding=1`;
+  // No modo demo os vídeos são de mentira: mostra só a miniatura.
+  $('preview').src = DEMO
+    ? 'about:blank'
+    : `https://www.youtube-nocookie.com/embed/${encodeURIComponent(r.videoId)}?rel=0&modestbranding=1`;
+  $('preview').style.background = DEMO ? `center / cover url("${r.thumbnail}")` : '';
   setTab('confirm');
 };
 
@@ -294,7 +299,7 @@ $('btn-confirm').onclick = async () => {
 };
 
 async function cancelMine(id) {
-  if (!confirm('Tirar sua música da fila?')) return;
+  if (!ask('Tirar sua música da fila?')) return;
   try {
     await rpc('cancel_my_request', { p_id: id });
     toast('Sua música saiu da fila.');
