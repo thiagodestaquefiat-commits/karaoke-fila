@@ -79,13 +79,5 @@
 .row.dj-row { border-color: var(--yellow); }
 .badge.dj { background: var(--yellow); color: #141118; }
 
-.break-active {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
-  background: var(--surface-2); border: 1px solid var(--yellow); border-radius: var(--radius); padding: 14px;
-}
-.break-active .grow { display: flex; flex-direction: column; gap: 4px; }
-.break-active strong { font-size: 20px; }
-.break-active .eyebrow { color: var(--yellow); }
-
 .round { align-self: flex-start; margin-top: 2px; }
 .round.first { background: var(--green); color: #141118; }

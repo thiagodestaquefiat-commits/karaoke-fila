@@ -26,12 +26,7 @@ export function computeSchedule({ night, playing, queue, now = Date.now() }) {
     remainingCurrentMs = Math.max(0, playing.duration_seconds * 1000 - elapsed);
   }
 
-  // Intervalo do DJ: soma o que falta para ele voltar.
-  const breakRemainingMs = night?.break_until
-    ? Math.max(0, Date.parse(night.break_until) - now)
-    : 0;
-
-  let cursor = remainingCurrentMs + breakRemainingMs;
+  let cursor = remainingCurrentMs;
   const items = queue.map((req, index) => {
     // Se não tem ninguém cantando, o primeiro da fila é "agora".
     const needsGap = playing || index > 0;
@@ -48,9 +43,6 @@ export function computeSchedule({ night, playing, queue, now = Date.now() }) {
   return {
     items,
     remainingCurrentMs,
-    breakRemainingMs,
-    onBreak: breakRemainingMs > 0,
-    breakEndsAt: night?.break_until ? new Date(Date.parse(night.break_until)) : null,
     totalMs: cursor,              // até a última música da fila terminar
     endsAt: new Date(now + cursor),
   };

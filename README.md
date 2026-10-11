@@ -54,16 +54,6 @@ O DJ também canta. No painel, em **Minha música**, ele busca no YouTube e esco
 
 As músicas do DJ não têm limite, não contam rodada para ninguém e aparecem marcadas como "MÚSICA DO DJ" no painel e como "DJ" no celular dos clientes.
 
-### Intervalo (música de fundo)
-
-Quando o DJ precisa dar uma pausa (banheiro, descanso), ele usa o card **Intervalo** no painel:
-
-1. Escolhe a duração (5 a 30 min).
-2. Busca uma música ou playlist de fundo. Essa busca não acrescenta "karaokê" e aceita mixes longos. Também dá para começar o intervalo sem música.
-3. A música de fundo toca no player do DJ e repete se acabar antes do fim.
-
-Enquanto isso, a **TV** mostra "Intervalo · já voltamos por volta de 02:50", o celular dos clientes mostra o intervalo na fila e **a estimativa de todo mundo soma o tempo do intervalo**. O DJ pode dar **+5 min** ou **encerrar**. Apertar **Próxima** ou **Tocar agora** também encerra o intervalo.
-
 ### "Não está aqui"
 
 Na primeira vez, a pessoa desce 3 posições e vê um aviso no celular. Na segunda, sai da fila. Essa regra fica em `dj_not_here()` no SQL e pode ser combinada com o dono.
@@ -85,7 +75,7 @@ Se não der conta, dá para pedir aumento de cota ao Google (é gratuito, mas pa
 ### 1. Supabase
 
 1. Crie um projeto **novo** em [supabase.com](https://supabase.com).
-2. Abra o **SQL Editor** e rode, nesta ordem, o conteúdo de `supabase/migrations/0001_init.sql`, `0002_rodadas.sql`, `0003_musica_do_dj.sql` e `0004_intervalo.sql`.
+2. Abra o **SQL Editor** e rode, nesta ordem, o conteúdo de `supabase/migrations/0001_init.sql`, `0002_rodadas.sql` e `0003_musica_do_dj.sql`.
 3. Em **Project Settings › API**, copie a **Project URL** e a **anon public key** para `web/js/config.js`.
 
 ### 2. Login com Google
@@ -148,7 +138,6 @@ supabase/
   migrations/0001_init.sql        tabelas, segurança (RLS) e funções da fila
   migrations/0002_rodadas.sql     preferência para quem ainda não cantou
   migrations/0003_musica_do_dj.sql o DJ toca a música dele quando quiser
-  migrations/0004_intervalo.sql   intervalo com música de fundo
   functions/youtube-search/       busca no YouTube com cache e duração
 web/
   index.html  js/app.js           cliente

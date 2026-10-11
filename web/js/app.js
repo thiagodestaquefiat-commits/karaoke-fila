@@ -86,9 +86,7 @@ function render() {
   // Topo
   $('night-status').textContent = !night
     ? 'Sem karaokê agora'
-    : (!state.playing && schedule.onBreak)
-      ? `Intervalo · volta por volta de ${formatClock(schedule.breakEndsAt)}`
-      : night.is_open ? 'Ao vivo · pedidos abertos' : 'Ao vivo · pedidos fechados';
+    : night.is_open ? 'Ao vivo · pedidos abertos' : 'Ao vivo · pedidos fechados';
 
   // Aviso na aba de busca
   const mine = myActiveRequest();
@@ -185,16 +183,6 @@ function renderQueue(schedule) {
           <span class="sub">${esc(p.singer_name)}</span>
         </span>
         <span class="badge live">CANTANDO</span>
-      </li>`);
-  } else if (schedule.onBreak) {
-    rows.push(`
-      <li class="row now">
-        <span class="pos" aria-hidden="true">‖</span>
-        <span class="grow">
-          <span class="title">Intervalo do DJ</span>
-          <span class="sub">Volta por volta de ${formatClock(schedule.breakEndsAt)}</span>
-        </span>
-        <span class="badge warn">INTERVALO</span>
       </li>`);
   }
 
