@@ -192,7 +192,7 @@ function renderQueue(schedule) {
         <span class="pos">${r.index + 1}</span>
         <span class="grow">
           <span class="title">${esc(r.title)}</span>
-          <span class="sub">${esc(r.singer_name)}${r.is_dj_song ? ' · DJ' : ''}</span>
+          <span class="sub">${esc(r.singer_name)}</span>
         </span>
         <span class="eta">${formatClock(r.startsAt)}</span>
       </li>`);

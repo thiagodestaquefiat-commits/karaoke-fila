@@ -2,7 +2,7 @@
 // "não está aqui", abrir/fechar pedidos.
 import {
   supabase, getUser, getMyProfile, signInWithGoogle, signOut,
-  loadState, subscribeToChanges, rpc, esc, toast, searchYouTube,
+  loadState, subscribeToChanges, rpc, esc, toast,
 } from './supabase.js';
 import { computeSchedule, formatDuration, formatWait, formatClock, formatSongLength } from './estimate.js';
 import { applyBrand } from './brand.js';
@@ -47,8 +47,6 @@ async function init() {
     show('screen-not-dj');
     return;
   }
-
-  $('dj-singer-name').value = savedDjName() || (profile.display_name || 'DJ').split(' ')[0];
 
   await refresh();
   subscribeToChanges(refresh);
@@ -139,14 +137,12 @@ function renderQueue() {
   const last = schedule.items.length - 1;
 
   $('queue').innerHTML = schedule.items.map((r) => `
-    <li class="row q-row ${r.is_dj_song ? 'dj-row' : ''}" data-id="${r.id}">
+    <li class="row q-row" data-id="${r.id}">
       <span class="pos">${r.index + 1}</span>
       <span class="grow">
         <span class="title">${esc(r.singer_name)}</span>
         <span class="sub">${esc(r.title)} · ${formatSongLength(r.duration_seconds)}</span>
-        ${r.is_dj_song
-          ? '<span class="badge dj round">MÚSICA DO DJ</span>'
-          : `<span class="badge round ${r.round > 1 ? '' : 'first'}">${r.round > 1 ? `${r.round}ª música` : '1ª vez'}</span>`}
+        <span class="badge round ${r.round > 1 ? '' : 'first'}">${r.round > 1 ? `${r.round}ª música` : '1ª vez'}</span>
         ${r.absent_count > 0 ? '<span class="sub absent">Já foi chamado e não estava</span>' : ''}
       </span>
       <span class="eta">
@@ -254,75 +250,6 @@ $('btn-end-night').onclick = () => {
   if (!confirm('Encerrar a noite? A fila atual será fechada.')) return;
   run(() => rpc('dj_end_night'), 'Noite encerrada.');
 };
-
-// ---------------------------------------------------------------
-// Minha música (o DJ canta quando quiser)
-// ---------------------------------------------------------------
-let djResults = [];
-
-$('dj-search-form').onsubmit = async (e) => {
-  e.preventDefault();
-  const q = $('dj-search-input').value.trim();
-  if (q.length < 2) return;
-  $('dj-search-hint').textContent = 'Buscando…';
-  $('dj-results').innerHTML = '';
-  try {
-    djResults = await searchYouTube(q);
-    $('dj-search-hint').textContent = djResults.length
-      ? 'Escolha a versão: "Tocar agora" entra direto no palco; "A seguir" entra como a próxima.'
-      : 'Nada encontrado. Tente com o nome do artista.';
-    $('dj-results').innerHTML = djResults.map((r, i) => `
-      <li class="row dj-result" data-index="${i}">
-        <img class="thumb" src="${esc(r.thumbnail)}" alt="" loading="lazy">
-        <span class="grow">
-          <span class="title">${esc(r.title)}</span>
-          <span class="sub">${esc(r.channel)} · ${formatSongLength(r.durationSeconds)}</span>
-        </span>
-        <span class="actions">
-          <button class="btn btn-secondary" type="button" data-mode="next">A seguir</button>
-          <button class="btn btn-primary" type="button" data-mode="now">Tocar agora</button>
-        </span>
-      </li>`).join('');
-  } catch (err) {
-    $('dj-search-hint').textContent = err.message;
-  }
-};
-
-$('dj-results').onclick = (e) => {
-  const btn = e.target.closest('button[data-mode]');
-  if (!btn) return;
-  const r = djResults[Number(btn.closest('[data-index]').dataset.index)];
-  const mode = btn.dataset.mode;
-  const name = $('dj-singer-name').value.trim() || 'DJ';
-
-  if (mode === 'now' && state.playing &&
-      !confirm(`Isso encerra a música de ${state.playing.singer_name} (${state.playing.title}). Tocar a sua agora?`)) {
-    return;
-  }
-
-  saveDjName(name);
-  if (mode === 'now') autoplayNext = true;
-  run(() => rpc('dj_add_song', {
-    p_video_id: r.videoId,
-    p_title: r.title,
-    p_channel: r.channel,
-    p_thumbnail_url: r.thumbnail,
-    p_duration_seconds: r.durationSeconds,
-    p_singer_name: name,
-    p_mode: mode,
-  }), mode === 'now' ? 'Sua música está no palco!' : 'Sua música é a próxima.').then(() => {
-    $('dj-results').innerHTML = '';
-    $('dj-search-hint').textContent = '';
-    $('dj-search-input').value = '';
-  });
-};
-
-function savedDjName() {
-  try { return localStorage.getItem('dj-name') || ''; } catch (_) { return ''; }
-}
-function saveDjName(name) {
-  try { localStorage.setItem('dj-name', name); } catch (_) { /* ok */ }
-}
 
 $('btn-login').onclick = () => signInWithGoogle();
 const logout = async () => { await signOut(); location.reload(); };
