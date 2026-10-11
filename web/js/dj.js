@@ -22,6 +22,7 @@ let player = null;          // YT.Player
 let playerReady = false;
 let loadedRequestId = null; // qual pedido está carregado no player
 let autoplayNext = false;   // true quando o DJ apertou "Próxima"
+let bgVideoId = null;       // música de fundo tocando no intervalo
 
 applyBrand();
 
@@ -104,16 +105,27 @@ function renderNow() {
   const schedule = currentSchedule();
   const p = state.playing;
 
-  $('now-singer').textContent = p ? p.singer_name : '—';
-  $('now-song').textContent = p ? `${p.title} · ${formatSongLength(p.duration_seconds)}` : 'Ninguém no palco';
-  $('player-empty').classList.toggle('hidden', !!p);
+  const onBreak = !p && schedule.onBreak;
+  $('now-singer').textContent = p ? p.singer_name : onBreak ? 'Intervalo' : '—';
+  $('now-song').textContent = p
+    ? `${p.title} · ${formatSongLength(p.duration_seconds)}`
+    : onBreak ? (bgVideoId ? 'Música de fundo tocando' : 'Sem música de fundo') : 'Ninguém no palco';
+  $('player-empty').classList.toggle('hidden', !!p || !!bgVideoId);
 
   if (p) {
-    const secs = Math.round(schedule.remainingCurrentMs / 1000);
-    const left = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+    const left = clockLeft(schedule.remainingCurrentMs);
     $('now-left').textContent = state.night.paused_at ? `Pausado · faltam ${left}` : `Faltam ${left}`;
+  } else if (onBreak) {
+    $('now-left').textContent = `Volta às ${formatClock(schedule.breakEndsAt)} · faltam ${clockLeft(schedule.breakRemainingMs)}`;
   } else {
     $('now-left').textContent = '';
+  }
+
+  // Card do intervalo
+  $('break-active').classList.toggle('hidden', !onBreak);
+  if (onBreak) {
+    $('break-status').textContent =
+      `Volta às ${formatClock(schedule.breakEndsAt)} (faltam ${clockLeft(schedule.breakRemainingMs)})`;
   }
   $('btn-pause').disabled = !p;
   $('btn-pause').textContent = state.night.paused_at ? 'Continuar' : 'Pausar';
@@ -317,6 +329,87 @@ $('dj-results').onclick = (e) => {
   });
 };
 
+// ---------------------------------------------------------------
+// Intervalo com música de fundo
+// ---------------------------------------------------------------
+let bgResults = [];
+
+function clockLeft(ms) {
+  const secs = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+}
+
+async function startBreak(videoId) {
+  if (state.playing &&
+      !confirm(`Isso encerra a música de ${state.playing.singer_name} (${state.playing.title}). Começar o intervalo?`)) {
+    return;
+  }
+  const minutes = Number($('break-min').value);
+  const ok = await run(() => rpc('dj_break', { p_minutes: minutes }),
+    `Intervalo de ${minutes} min. A TV já mostra "já voltamos".`);
+  if (!ok) return;
+  if (videoId && playerReady) {
+    bgVideoId = videoId;
+    loadedRequestId = null;
+    player.loadVideoById(videoId);
+  } else if (playerReady) {
+    bgVideoId = null;
+    player.stopVideo();
+  }
+  $('bg-results').innerHTML = '';
+  $('bg-search-hint').textContent = '';
+  renderNow();
+}
+
+async function endBreak() {
+  await run(() => rpc('dj_break', { p_minutes: 0 }), 'Intervalo encerrado. Chame o próximo!');
+  if (bgVideoId && playerReady) player.stopVideo();
+  bgVideoId = null;
+  $('btn-next').classList.add('pulse');
+  renderNow();
+}
+
+$('bg-search-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const q = $('bg-search-input').value.trim();
+  if (q.length < 2) return;
+  $('bg-search-hint').textContent = 'Buscando…';
+  $('bg-results').innerHTML = '';
+  try {
+    bgResults = await searchYouTube(q, 'background');
+    $('bg-search-hint').textContent = bgResults.length
+      ? 'Escolha o que vai tocar. Se acabar antes do intervalo, repete.'
+      : 'Nada encontrado. Tente outro termo.';
+    $('bg-results').innerHTML = bgResults.map((r, i) => `
+      <li class="row dj-result" data-index="${i}">
+        <img class="thumb" src="${esc(r.thumbnail)}" alt="" loading="lazy">
+        <span class="grow">
+          <span class="title">${esc(r.title)}</span>
+          <span class="sub">${esc(r.channel)} · ${formatDuration(r.durationSeconds * 1000)}</span>
+        </span>
+        <span class="actions">
+          <button class="btn btn-primary" type="button" data-bg="play">Tocar de fundo</button>
+        </span>
+      </li>`).join('');
+  } catch (err) {
+    $('bg-search-hint').textContent = err.message;
+  }
+};
+
+$('bg-results').onclick = (e) => {
+  const btn = e.target.closest('button[data-bg]');
+  if (!btn) return;
+  const r = bgResults[Number(btn.closest('[data-index]').dataset.index)];
+  startBreak(r.videoId);
+};
+
+$('btn-break-silent').onclick = () => startBreak(null);
+$('btn-break-end').onclick = () => endBreak();
+$('btn-break-plus').onclick = () => {
+  const remainingMin = Math.ceil(currentSchedule().breakRemainingMs / 60000);
+  run(() => rpc('dj_break', { p_minutes: remainingMin + 5 }), 'Mais 5 minutos de intervalo.');
+};
+
 function savedDjName() {
   try { return localStorage.getItem('dj-name') || ''; } catch (_) { return ''; }
 }
@@ -350,10 +443,12 @@ function syncPlayer() {
   if (!playerReady) return;
   const p = state.playing;
   if (!p) {
+    if (bgVideoId) return; // música de fundo do intervalo: deixa tocando
     if (loadedRequestId) { player.stopVideo(); loadedRequestId = null; }
     return;
   }
   if (p.id === loadedRequestId) return;
+  bgVideoId = null; // alguém subiu no palco: acabou a música de fundo
   loadedRequestId = p.id;
   if (autoplayNext) player.loadVideoById(p.video_id);
   else player.cueVideoById(p.video_id); // abriu o painel no meio: não dá play sozinho
@@ -363,6 +458,11 @@ function syncPlayer() {
 function onPlayerState(e) {
   const night = state.night;
   if (!night) return;
+  if (bgVideoId) {
+    // Música de fundo acabou antes do intervalo? Repete.
+    if (e.data === YT.PlayerState.ENDED) { player.seekTo(0); player.playVideo(); }
+    return;
+  }
   if (e.data === YT.PlayerState.PAUSED && !night.paused_at) {
     rpc('dj_pause', { p_paused: true }).catch((err) => toast(err.message, 'error'));
   }

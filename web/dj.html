@@ -122,6 +122,45 @@
 
         <div id="up-next" class="up-next card hidden"></div>
 
+        <section class="card dj-song" aria-labelledby="break-title">
+          <div class="dj-song-head">
+            <h2 id="break-title">Intervalo</h2>
+            <span class="small muted">Música de fundo enquanto você dá uma pausa. A TV mostra "já voltamos".</span>
+          </div>
+
+          <div id="break-active" class="break-active hidden">
+            <div class="grow">
+              <span class="eyebrow">INTERVALO ROLANDO</span>
+              <strong id="break-status">Volta às --:--</strong>
+            </div>
+            <div class="now-actions">
+              <button id="btn-break-plus" class="btn btn-secondary" type="button">+5 min</button>
+              <button id="btn-break-end" class="btn btn-primary" type="button">Encerrar intervalo</button>
+            </div>
+          </div>
+
+          <form id="bg-search-form" class="dj-search" role="search">
+            <div class="field name-field">
+              <label for="break-min">Duração</label>
+              <select id="break-min" class="input">
+                <option value="5">5 min</option>
+                <option value="10" selected>10 min</option>
+                <option value="15">15 min</option>
+                <option value="20">20 min</option>
+                <option value="30">30 min</option>
+              </select>
+            </div>
+            <div class="field grow-field">
+              <label for="bg-search-input">Música ou playlist de fundo</label>
+              <input id="bg-search-input" class="input" type="search" placeholder="Ex.: MPB ao vivo, sertanejo acústico" autocomplete="off">
+            </div>
+            <button class="btn btn-secondary" type="submit">Buscar</button>
+          </form>
+          <p class="small muted"><button id="btn-break-silent" class="btn btn-ghost" type="button">Começar intervalo sem música</button></p>
+          <p id="bg-search-hint" class="small muted"></p>
+          <ul id="bg-results" class="list"></ul>
+        </section>
+
         <section class="card dj-song" aria-labelledby="dj-song-title">
           <div class="dj-song-head">
             <h2 id="dj-song-title">Minha música</h2>
