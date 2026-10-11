@@ -1,0 +1,4 @@
+project_id = "karaoke-fila"
+
+[functions.youtube-search]
+verify_jwt = true

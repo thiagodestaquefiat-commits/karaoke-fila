@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#141118">
+  <title>Painel do DJ · Karaokê</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dj.css">
+</head>
+<body>
+
+  <section id="screen-loading" class="center-screen">
+    <div class="spinner" aria-label="Carregando"></div>
+  </section>
+
+  <section id="screen-login" class="center-screen hidden">
+    <h1>Painel do DJ</h1>
+    <p class="muted">Entre com a conta Google marcada como DJ.</p>
+    <button id="btn-login" class="btn btn-primary" type="button">Entrar com Google</button>
+  </section>
+
+  <section id="screen-not-dj" class="center-screen hidden">
+    <h1>Essa conta não é de DJ</h1>
+    <p class="muted" id="not-dj-email"></p>
+    <p class="muted small">Peça para o administrador liberar sua conta (veja o README).</p>
+    <button id="btn-logout-2" class="btn btn-secondary" type="button">Sair</button>
+  </section>
+
+  <section id="screen-no-night" class="center-screen hidden">
+    <h1>Nenhuma noite rolando</h1>
+    <div class="field start-field">
+      <label for="night-title">Nome da noite</label>
+      <input id="night-title" class="input" type="text" value="Karaokê" maxlength="60">
+    </div>
+    <button id="btn-start-night" class="btn btn-primary" type="button">Começar a noite</button>
+  </section>
+
+  <div id="screen-panel" class="panel hidden">
+    <header class="panel-head">
+      <div class="panel-title">
+        <span class="venue" data-venue></span>
+        <span id="night-title-label" class="small muted"></span>
+      </div>
+
+      <div class="chips" aria-live="polite">
+        <span class="chip"><strong id="stat-count">0</strong> na fila</span>
+        <span class="chip">Duração <strong id="stat-total">0 min</strong></span>
+        <span class="chip">Termina ~<strong id="stat-end">--:--</strong></span>
+      </div>
+
+      <div class="head-actions">
+        <button id="btn-toggle-open" class="btn toggle-open" type="button" aria-pressed="true">Pedidos abertos</button>
+        <button id="btn-settings" class="btn btn-secondary" type="button" aria-expanded="false" aria-controls="settings">Ajustes</button>
+      </div>
+    </header>
+
+    <section id="settings" class="card settings hidden" aria-label="Ajustes da noite">
+      <div class="field">
+        <label for="gap">Folga entre músicas</label>
+        <select id="gap" class="input">
+          <option value="30">30 s</option>
+          <option value="45">45 s</option>
+          <option value="60">1 min</option>
+          <option value="75">1 min 15 s</option>
+          <option value="90">1 min 30 s</option>
+          <option value="120">2 min</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="max-per-user">Músicas por pessoa na fila</label>
+        <select id="max-per-user" class="input">
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+        </select>
+      </div>
+      <div class="settings-links">
+        <a href="index.html" target="_blank" rel="noopener">Abrir tela do cliente</a>
+        <a href="tv.html" target="_blank" rel="noopener">Abrir tela da TV</a>
+      </div>
+      <div class="settings-actions">
+        <button id="btn-end-night" class="btn btn-secondary" type="button">Encerrar a noite</button>
+        <button id="btn-logout" class="btn btn-ghost" type="button">Sair da conta</button>
+      </div>
+    </section>
+
+    <div class="panel-body">
+      <section class="stage" aria-label="Palco">
+        <div class="player-box">
+          <div id="player"></div>
+          <div id="player-empty" class="player-empty">
+            <span>Nada tocando. Toque em <strong>Próxima</strong> para chamar o primeiro da fila.</span>
+          </div>
+        </div>
+
+        <div class="now card">
+          <div class="now-info">
+            <span class="eyebrow">CANTANDO AGORA</span>
+            <span id="now-singer" class="now-singer">—</span>
+            <span id="now-song" class="muted"></span>
+            <span id="now-left" class="small muted"></span>
+          </div>
+          <div class="now-actions">
+            <button id="btn-pause" class="btn btn-secondary" type="button">Pausar</button>
+            <button id="btn-next" class="btn btn-primary btn-next" type="button">Próxima →</button>
+          </div>
+        </div>
+
+        <div id="up-next" class="up-next card hidden"></div>
+      </section>
+
+      <section class="queue-col card" aria-label="Fila">
+        <div class="queue-col-head">
+          <h2>Fila</h2>
+          <span class="small muted">Ordem de chegada. Reordene se precisar.</span>
+        </div>
+        <ul id="queue" class="list"></ul>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script type="module" src="js/dj.js"></script>
+</body>
+</html>

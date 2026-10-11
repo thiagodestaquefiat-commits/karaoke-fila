@@ -1,0 +1,62 @@
+/* ===== Painel do DJ ===== */
+.venue { font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; }
+.start-field { width: min(360px, 100%); text-align: left; }
+
+.panel { max-width: 1440px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.panel-title { display: flex; flex-direction: column; gap: 2px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 10px 14px; font-size: 14px;
+}
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.toggle-open { background: var(--green); color: #141118; }
+.toggle-open[aria-pressed="false"] { background: var(--muted); }
+
+.settings { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.settings .field { min-width: 180px; }
+.settings-links { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.settings-links a { color: var(--yellow); }
+.settings-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+
+.panel-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+.stage { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.queue-col { flex: 1 1 400px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.queue-col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+.player-box {
+  position: relative; aspect-ratio: 16 / 9; background: #0b090e;
+  border-radius: 18px; overflow: hidden; border: 1px solid var(--line);
+}
+.player-box iframe, #player { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.player-empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: 24px; text-align: center; color: var(--muted); background: #0b090e;
+}
+
+.now { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.now-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; color: var(--pink-soft); }
+.now-singer { font-family: var(--font-display); font-size: 30px; font-weight: 800; line-height: 1.05; }
+.now-actions { display: flex; gap: 8px; }
+.now-actions .btn { min-height: 52px; }
+.btn-next.pulse { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(255, 92, 138, 0.35); } }
+
+.up-next { display: flex; flex-direction: column; gap: 4px; }
+.up-next strong { font-size: 18px; }
+
+/* Linha da fila do DJ */
+.q-row { flex-wrap: wrap; }
+.q-row .eta { display: flex; flex-direction: column; align-items: flex-end; font-size: 13px; }
+.q-row .eta strong { font-size: 15px; }
+.q-row .tools { display: flex; gap: 4px; flex-wrap: wrap; width: 100%; justify-content: flex-end; }
+.btn-text {
+  min-height: 44px; padding: 0 12px; border-radius: 10px; border: 0;
+  background: var(--surface-2); color: var(--text); font-weight: 700; font-size: 13px;
+}
+.btn-text.warn { color: var(--yellow); }
+.absent { color: var(--yellow); font-weight: 700; }

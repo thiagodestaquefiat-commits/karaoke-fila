@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tela da TV · Karaokê</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@500;600;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/tv.css">
+</head>
+<body>
+  <main class="tv">
+    <section class="tv-left">
+      <div class="tv-now">
+        <span class="tv-eyebrow">AGORA NO PALCO</span>
+        <span id="now-singer" class="tv-singer">—</span>
+        <span id="now-song" class="tv-song"></span>
+      </div>
+
+      <div class="tv-next">
+        <span class="tv-eyebrow muted">PRÓXIMOS</span>
+        <ol id="next" class="tv-list"></ol>
+        <span id="tv-more" class="muted"></span>
+      </div>
+    </section>
+
+    <aside class="tv-qr">
+      <span class="tv-qr-title">Quer cantar?</span>
+      <div id="qr" class="qr" role="img" aria-label="QR code para pedir música"></div>
+      <span class="tv-qr-text">Aponte a câmera, escolha a música<br>e acompanhe sua vez pelo celular</span>
+      <span id="tv-closed" class="tv-closed hidden">Pedidos fechados no momento</span>
+    </aside>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script type="module" src="js/tv.js"></script>
+</body>
+</html>

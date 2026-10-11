@@ -1,0 +1,311 @@
+// Painel do DJ: player do YouTube, fila com horários, reordenar,
+// "não está aqui", abrir/fechar pedidos.
+import {
+  supabase, getUser, getMyProfile, signInWithGoogle, signOut,
+  loadState, subscribeToChanges, rpc, esc, toast,
+} from './supabase.js';
+import { computeSchedule, formatDuration, formatWait, formatClock, formatSongLength } from './estimate.js';
+import { VENUE_NAME } from './config.js';
+
+const $ = (id) => document.getElementById(id);
+const SCREENS = ['screen-loading', 'screen-login', 'screen-not-dj', 'screen-no-night', 'screen-panel'];
+
+const state = {
+  night: null,
+  playing: null,
+  queue: [],
+  schedule: null,
+  busy: false,
+};
+
+let player = null;          // YT.Player
+let playerReady = false;
+let loadedRequestId = null; // qual pedido está carregado no player
+let autoplayNext = false;   // true quando o DJ apertou "Próxima"
+
+document.querySelectorAll('[data-venue]').forEach((el) => (el.textContent = VENUE_NAME));
+
+function show(id) {
+  SCREENS.forEach((s) => $(s).classList.toggle('hidden', s !== id));
+}
+
+// ---------------------------------------------------------------
+// Início
+// ---------------------------------------------------------------
+let booted = false;
+
+async function init() {
+  if (booted) return;
+  const user = await getUser();
+  if (!user) { show('screen-login'); return; }
+  if (booted) return;
+  booted = true;
+
+  const profile = await getMyProfile();
+  if (profile?.role !== 'dj') {
+    $('not-dj-email').textContent = user.email;
+    show('screen-not-dj');
+    return;
+  }
+
+  await refresh();
+  subscribeToChanges(refresh);
+  setInterval(renderNow, 1000);      // contagem "faltam 2:31"
+  setInterval(renderQueue, 30000);   // horários da fila
+  keepScreenOn();
+}
+
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'SIGNED_IN') init();
+});
+
+async function refresh() {
+  try {
+    const s = await loadState();
+    Object.assign(state, s);
+    if (!state.night) { show('screen-no-night'); return; }
+    show('screen-panel');
+    render();
+    syncPlayer();
+  } catch (err) {
+    console.error(err);
+    toast('Sem conexão com o banco. Tentando de novo…', 'error');
+  }
+}
+
+// ---------------------------------------------------------------
+// Renderização
+// ---------------------------------------------------------------
+function render() {
+  const { night } = state;
+  $('night-title-label').textContent = night.title;
+
+  const open = $('btn-toggle-open');
+  open.textContent = night.is_open ? 'Pedidos abertos' : 'Pedidos fechados';
+  open.setAttribute('aria-pressed', String(night.is_open));
+
+  $('gap').value = String(night.gap_seconds);
+  $('max-per-user').value = String(night.max_per_user);
+
+  renderNow();
+  renderQueue();
+}
+
+function currentSchedule() {
+  return computeSchedule({ night: state.night, playing: state.playing, queue: state.queue });
+}
+
+// Bloco "cantando agora" + estatísticas do topo (roda a cada segundo).
+function renderNow() {
+  if (!state.night) return;
+  const schedule = currentSchedule();
+  const p = state.playing;
+
+  $('now-singer').textContent = p ? p.singer_name : '—';
+  $('now-song').textContent = p ? `${p.title} · ${formatSongLength(p.duration_seconds)}` : 'Ninguém no palco';
+  $('player-empty').classList.toggle('hidden', !!p);
+
+  if (p) {
+    const secs = Math.round(schedule.remainingCurrentMs / 1000);
+    const left = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+    $('now-left').textContent = state.night.paused_at ? `Pausado · faltam ${left}` : `Faltam ${left}`;
+  } else {
+    $('now-left').textContent = '';
+  }
+  $('btn-pause').disabled = !p;
+  $('btn-pause').textContent = state.night.paused_at ? 'Continuar' : 'Pausar';
+
+  $('stat-count').textContent = String(state.queue.length);
+  $('stat-total').textContent = formatDuration(schedule.totalMs);
+  $('stat-end').textContent = formatClock(schedule.endsAt);
+
+  const first = schedule.items[0];
+  const upNext = $('up-next');
+  upNext.classList.toggle('hidden', !first);
+  if (first) {
+    upNext.innerHTML = `
+      <span class="eyebrow">PRÓXIMO · ${formatWait(first.startsInMs)}</span>
+      <strong>${esc(first.singer_name)}</strong>
+      <span class="muted">${esc(first.title)}</span>`;
+  }
+}
+
+function renderQueue() {
+  if (!state.night) return;
+  const schedule = currentSchedule();
+  const last = schedule.items.length - 1;
+
+  $('queue').innerHTML = schedule.items.map((r) => `
+    <li class="row q-row" data-id="${r.id}">
+      <span class="pos">${r.index + 1}</span>
+      <span class="grow">
+        <span class="title">${esc(r.singer_name)}</span>
+        <span class="sub">${esc(r.title)} · ${formatSongLength(r.duration_seconds)}</span>
+        ${r.absent_count > 0 ? '<span class="sub absent">Já foi chamado e não estava</span>' : ''}
+      </span>
+      <span class="eta">
+        <strong>${formatClock(r.startsAt)}</strong>
+        <span class="muted">${formatWait(r.startsInMs)}</span>
+      </span>
+      <span class="tools">
+        <button class="btn-icon" type="button" data-act="up" aria-label="Subir ${esc(r.singer_name)}" ${r.index === 0 ? 'disabled' : ''}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+        </button>
+        <button class="btn-icon" type="button" data-act="down" aria-label="Descer ${esc(r.singer_name)}" ${r.index === last ? 'disabled' : ''}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <button class="btn-text" type="button" data-act="top" ${r.index === 0 ? 'disabled' : ''}>Topo</button>
+        <button class="btn-text" type="button" data-act="bottom" ${r.index === last ? 'disabled' : ''}>Fim</button>
+        <button class="btn-text warn" type="button" data-act="absent">Não está aqui</button>
+        <button class="btn-icon danger" type="button" data-act="remove" aria-label="Remover ${esc(r.singer_name)}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </span>
+    </li>`).join('') || '<li class="muted">Fila vazia. Bora chamar alguém pro palco.</li>';
+}
+
+// ---------------------------------------------------------------
+// Ações da fila
+// ---------------------------------------------------------------
+async function run(fn, okMessage) {
+  if (state.busy) return;
+  state.busy = true;
+  try {
+    const result = await fn();
+    if (okMessage) toast(typeof okMessage === 'function' ? okMessage(result) : okMessage);
+    await refresh();
+    return result;
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    state.busy = false;
+  }
+}
+
+$('queue').onclick = (e) => {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn || btn.disabled) return;
+  const id = btn.closest('[data-id]').dataset.id;
+  const index = state.queue.findIndex((r) => r.id === id);
+  const req = state.queue[index];
+
+  switch (btn.dataset.act) {
+    case 'up':     run(() => rpc('dj_move', { p_id: id, p_to_index: index - 1 })); break;
+    case 'down':   run(() => rpc('dj_move', { p_id: id, p_to_index: index + 1 })); break;
+    case 'top':    run(() => rpc('dj_move', { p_id: id, p_to_index: 0 })); break;
+    case 'bottom': run(() => rpc('dj_move', { p_id: id, p_to_index: state.queue.length - 1 })); break;
+    case 'absent':
+      run(() => rpc('dj_not_here', { p_id: id }), (res) =>
+        res === 'removed'
+          ? `${req.singer_name} não apareceu de novo e saiu da fila.`
+          : `${req.singer_name} desceu 3 posições.`);
+      break;
+    case 'remove':
+      if (confirm(`Remover ${req.singer_name} (${req.title}) da fila?`)) {
+        run(() => rpc('dj_remove', { p_id: id }), 'Removido da fila.');
+      }
+      break;
+  }
+};
+
+$('btn-next').onclick = () => {
+  $('btn-next').classList.remove('pulse');
+  autoplayNext = true;
+  run(() => rpc('dj_next'), (r) => (r?.id ? `Chamando ${r.singer_name}` : 'A fila acabou.'));
+};
+
+$('btn-pause').onclick = () => {
+  if (!player || !playerReady) return;
+  if (state.night.paused_at) player.playVideo();
+  else player.pauseVideo();
+  // O onStateChange do player avisa o banco (mantém a estimativa certa).
+};
+
+$('btn-toggle-open').onclick = () =>
+  run(() => rpc('dj_update_night', { p_is_open: !state.night.is_open }),
+    state.night.is_open ? 'Pedidos fechados.' : 'Pedidos abertos.');
+
+$('gap').onchange = (e) =>
+  run(() => rpc('dj_update_night', { p_gap_seconds: Number(e.target.value) }), 'Folga atualizada.');
+
+$('max-per-user').onchange = (e) =>
+  run(() => rpc('dj_update_night', { p_max_per_user: Number(e.target.value) }), 'Limite atualizado.');
+
+$('btn-settings').onclick = () => {
+  const box = $('settings');
+  box.classList.toggle('hidden');
+  $('btn-settings').setAttribute('aria-expanded', String(!box.classList.contains('hidden')));
+};
+
+$('btn-start-night').onclick = () =>
+  run(() => rpc('dj_start_night', { p_title: $('night-title').value }), 'Noite começou!');
+
+$('btn-end-night').onclick = () => {
+  if (!confirm('Encerrar a noite? A fila atual será fechada.')) return;
+  run(() => rpc('dj_end_night'), 'Noite encerrada.');
+};
+
+$('btn-login').onclick = () => signInWithGoogle();
+const logout = async () => { await signOut(); location.reload(); };
+$('btn-logout').onclick = logout;
+$('btn-logout-2').onclick = logout;
+
+// ---------------------------------------------------------------
+// Player do YouTube
+// ---------------------------------------------------------------
+window.onYouTubeIframeAPIReady = () => {
+  if (player) return;
+  player = new YT.Player('player', {
+    playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
+    events: {
+      onReady: () => { playerReady = true; syncPlayer(); },
+      onStateChange: onPlayerState,
+      onError: () => toast('Esse vídeo não pôde tocar. Pule para a próxima ou remova.', 'error'),
+    },
+  });
+};
+// Se a API do YouTube carregou antes deste módulo:
+if (window.YT?.Player) window.onYouTubeIframeAPIReady();
+
+function syncPlayer() {
+  if (!playerReady) return;
+  const p = state.playing;
+  if (!p) {
+    if (loadedRequestId) { player.stopVideo(); loadedRequestId = null; }
+    return;
+  }
+  if (p.id === loadedRequestId) return;
+  loadedRequestId = p.id;
+  if (autoplayNext) player.loadVideoById(p.video_id);
+  else player.cueVideoById(p.video_id); // abriu o painel no meio: não dá play sozinho
+  autoplayNext = false;
+}
+
+function onPlayerState(e) {
+  const night = state.night;
+  if (!night) return;
+  if (e.data === YT.PlayerState.PAUSED && !night.paused_at) {
+    rpc('dj_pause', { p_paused: true }).catch((err) => toast(err.message, 'error'));
+  }
+  if (e.data === YT.PlayerState.PLAYING && night.paused_at) {
+    rpc('dj_pause', { p_paused: false }).catch((err) => toast(err.message, 'error'));
+  }
+  if (e.data === YT.PlayerState.ENDED) {
+    toast('A música terminou. Chame o próximo quando estiver pronto.');
+    $('btn-next').classList.add('pulse');
+  }
+}
+
+// Mantém a tela do DJ acesa (quando o navegador permite).
+async function keepScreenOn() {
+  try {
+    if ('wakeLock' in navigator) {
+      await navigator.wakeLock.request('screen');
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') navigator.wakeLock.request('screen').catch(() => {});
+      });
+    }
+  } catch (_) { /* sem problema */ }
+}
+
+init();
