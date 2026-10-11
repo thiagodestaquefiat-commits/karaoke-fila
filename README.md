@@ -45,6 +45,15 @@ Exemplo: a fila é `Duda (1ª) > Thiago (2ª)`. Chega a Eva pela primeira vez e 
 - Em **Ajustes**, o DJ pode desligar a regra e voltar para a ordem de chegada pura.
 - Quem está numa rodada maior vê no celular que o horário pode mudar se chegar gente nova.
 
+### Música do DJ
+
+O DJ também canta. No painel, em **Minha música**, ele busca no YouTube e escolhe:
+
+- **Tocar agora:** a música dele vai direto para o palco. Se alguém estiver cantando, o painel pergunta antes e encerra aquela música.
+- **A seguir:** a música dele entra como a próxima, na frente da fila.
+
+As músicas do DJ não têm limite, não contam rodada para ninguém e aparecem marcadas como "MÚSICA DO DJ" no painel e como "DJ" no celular dos clientes.
+
 ### "Não está aqui"
 
 Na primeira vez, a pessoa desce 3 posições e vê um aviso no celular. Na segunda, sai da fila. Essa regra fica em `dj_not_here()` no SQL e pode ser combinada com o dono.
@@ -66,7 +75,7 @@ Se não der conta, dá para pedir aumento de cota ao Google (é gratuito, mas pa
 ### 1. Supabase
 
 1. Crie um projeto **novo** em [supabase.com](https://supabase.com).
-2. Abra o **SQL Editor** e rode, nesta ordem, o conteúdo de `supabase/migrations/0001_init.sql` e depois o de `0002_rodadas.sql`.
+2. Abra o **SQL Editor** e rode, nesta ordem, o conteúdo de `supabase/migrations/0001_init.sql`, `0002_rodadas.sql` e `0003_musica_do_dj.sql`.
 3. Em **Project Settings › API**, copie a **Project URL** e a **anon public key** para `web/js/config.js`.
 
 ### 2. Login com Google
@@ -128,6 +137,7 @@ Endereços:
 supabase/
   migrations/0001_init.sql        tabelas, segurança (RLS) e funções da fila
   migrations/0002_rodadas.sql     preferência para quem ainda não cantou
+  migrations/0003_musica_do_dj.sql o DJ toca a música dele quando quiser
   functions/youtube-search/       busca no YouTube com cache e duração
 web/
   index.html  js/app.js           cliente
