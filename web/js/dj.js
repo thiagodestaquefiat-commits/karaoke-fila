@@ -5,7 +5,7 @@ import {
   loadState, subscribeToChanges, rpc, esc, toast,
 } from './supabase.js';
 import { computeSchedule, formatDuration, formatWait, formatClock, formatSongLength } from './estimate.js';
-import { VENUE_NAME } from './config.js';
+import { applyBrand } from './brand.js';
 
 const $ = (id) => document.getElementById(id);
 const SCREENS = ['screen-loading', 'screen-login', 'screen-not-dj', 'screen-no-night', 'screen-panel'];
@@ -23,7 +23,7 @@ let playerReady = false;
 let loadedRequestId = null; // qual pedido está carregado no player
 let autoplayNext = false;   // true quando o DJ apertou "Próxima"
 
-document.querySelectorAll('[data-venue]').forEach((el) => (el.textContent = VENUE_NAME));
+applyBrand();
 
 function show(id) {
   SCREENS.forEach((s) => $(s).classList.toggle('hidden', s !== id));

@@ -14,7 +14,10 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 16px 8px;
 }
-.topbar-title { display: flex; flex-direction: column; gap: 2px; }
+.topbar-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tagline { margin: -8px 0 0; font-size: 14px; }
+.whatsapp { text-decoration: none; margin-top: 8px; }
 .btn-avatar { background: none; border: 0; padding: 6px; border-radius: 50%; min-width: 44px; min-height: 44px; }
 
 .content {

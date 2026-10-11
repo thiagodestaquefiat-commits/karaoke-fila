@@ -2,6 +2,9 @@
 // Não precisa de login (só lê a fila).
 import { loadState, subscribeToChanges, esc } from './supabase.js';
 import { computeSchedule, formatWait } from './estimate.js';
+import { applyBrand } from './brand.js';
+
+applyBrand();
 
 const $ = (id) => document.getElementById(id);
 const state = { night: null, playing: null, queue: [] };

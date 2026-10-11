@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/brand.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -21,7 +22,8 @@
 
   <!-- Login -->
   <section id="screen-login" class="center-screen hidden">
-    <span class="venue" data-venue></span>
+    <img class="logo logo-hero" data-logo alt="">
+    <p class="muted tagline" data-tagline></p>
     <h1>Peça sua música<br>e acompanhe sua vez</h1>
     <p class="muted">Entre com o Google para entrar na fila. Sem cadastro.</p>
     <button id="btn-login" class="btn btn-google" type="button">
@@ -33,9 +35,12 @@
   <!-- App -->
   <div id="screen-app" class="app hidden">
     <header class="topbar">
-      <div class="topbar-title">
-        <span class="venue" data-venue></span>
-        <span id="night-status" class="small muted"></span>
+      <div class="topbar-brand">
+        <img class="logo logo-sm" data-logo alt="">
+        <div class="topbar-title">
+          <span class="venue" data-venue></span>
+          <span id="night-status" class="small muted"></span>
+        </div>
       </div>
       <button id="btn-logout" class="btn-avatar" type="button" aria-label="Sair">
         <img id="avatar" class="avatar" alt="">
@@ -100,6 +105,11 @@
           <span id="queue-total" class="small muted"></span>
         </div>
         <ul id="queue" class="list"></ul>
+
+        <a class="btn btn-secondary btn-block whatsapp" data-whatsapp target="_blank" rel="noopener">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
+          Entrar no grupo do WhatsApp
+        </a>
       </section>
     </main>
 

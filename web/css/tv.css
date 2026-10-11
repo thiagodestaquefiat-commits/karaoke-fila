@@ -38,6 +38,7 @@ html, body { height: 100%; overflow: hidden; cursor: none; }
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 3vh; padding: 3vw; text-align: center;
 }
+.tv-logo { width: auto; height: 12vh; max-width: 80%; }
 .tv-qr-title { font-family: var(--font-display); font-size: 3.2vw; font-weight: 800; letter-spacing: -0.02em; }
 .qr { background: #fff; padding: 1vw; border-radius: 1vw; }
 .qr img, .qr canvas { display: block; width: 20vw !important; height: 20vw !important; }

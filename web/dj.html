@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Figtree:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/brand.css">
   <link rel="stylesheet" href="css/dj.css">
 </head>
 <body>
@@ -18,6 +19,7 @@
   </section>
 
   <section id="screen-login" class="center-screen hidden">
+    <img class="logo logo-hero" data-logo alt="">
     <h1>Painel do DJ</h1>
     <p class="muted">Entre com a conta Google marcada como DJ.</p>
     <button id="btn-login" class="btn btn-primary" type="button">Entrar com Google</button>
@@ -41,9 +43,12 @@
 
   <div id="screen-panel" class="panel hidden">
     <header class="panel-head">
-      <div class="panel-title">
-        <span class="venue" data-venue></span>
-        <span id="night-title-label" class="small muted"></span>
+      <div class="panel-brand">
+        <img class="logo logo-md" data-logo alt="">
+        <div class="panel-title">
+          <span class="venue" data-venue></span>
+          <span id="night-title-label" class="small muted"></span>
+        </div>
       </div>
 
       <div class="chips" aria-live="polite">

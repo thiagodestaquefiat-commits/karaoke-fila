@@ -4,7 +4,8 @@ import {
   loadState, subscribeToChanges, rpc, searchYouTube, esc, toast,
 } from './supabase.js';
 import { computeSchedule, formatWait, formatClock, formatDuration, formatSongLength } from './estimate.js';
-import { VENUE_NAME, NOTIFY_WHEN_POSITION, NOTIFY_WHEN_MINUTES } from './config.js';
+import { NOTIFY_WHEN_POSITION, NOTIFY_WHEN_MINUTES } from './config.js';
+import { applyBrand } from './brand.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -22,7 +23,7 @@ const state = {
 // ---------------------------------------------------------------
 // Início
 // ---------------------------------------------------------------
-document.querySelectorAll('[data-venue]').forEach((el) => (el.textContent = VENUE_NAME));
+applyBrand();
 
 let booted = false;
 

@@ -1,0 +1,21 @@
+/* =====================================================================
+   Marca do bar: troque só estas cores para personalizar o karaokê.
+   (As telas inteiras usam estas variáveis.)
+   ===================================================================== */
+:root {
+  --bg: #141118;        /* fundo */
+  --surface: #1f1b26;   /* cartões */
+  --surface-2: #2a2533; /* botões secundários */
+  --line: #2e2838;      /* bordas */
+  --text: #f4f0f7;      /* texto */
+  --muted: #b3a9bf;     /* texto secundário */
+  --pink: #ff5c8a;      /* cor principal (botões, "sua vez") */
+  --pink-soft: #ff8fae; /* destaques ("cantando agora") */
+  --yellow: #ffd166;    /* cor de apoio (posição na fila, "prepara!") */
+  --green: #7ee0a8;     /* "pedidos abertos", "1ª vez" */
+}
+
+/* Logo */
+.logo { display: block; object-fit: contain; }
+.logo-hero { width: min(240px, 60vw); height: auto; max-height: 240px; }
+.logo-sm { width: 40px; height: 40px; }

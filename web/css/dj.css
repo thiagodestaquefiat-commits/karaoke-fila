@@ -5,7 +5,9 @@
 .panel { max-width: 1440px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
 
 .panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.panel-brand { display: flex; align-items: center; gap: 12px; }
 .panel-title { display: flex; flex-direction: column; gap: 2px; }
+.logo-md { width: 56px; height: 56px; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
