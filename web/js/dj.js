@@ -389,7 +389,7 @@ function onTvMessage(m) {
   if (!tv.connected) onTvConnected();
   if (m.type === 'tv-state') handleVideoState(m.state);
   if (m.type === 'tv-progress') { tv.time = m.time; tv.duration = m.duration; renderTvArea(); }
-  if (m.type === 'tv-error') toast('Esse vídeo não pôde tocar na TV. Pule para a próxima ou remova.', 'error');
+  if (m.type === 'tv-error') toast(m.message || 'Esse vídeo não pôde tocar na TV. Pule para a próxima ou remova.', 'error');
 }
 
 function checkTvAlive() {

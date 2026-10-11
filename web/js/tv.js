@@ -64,11 +64,14 @@ setInterval(render, 30000);
 // =====================================================================
 const isPlayer = new URLSearchParams(location.search).has('player');
 
-let yt = null;           // YT.Player
+let yt = null;           // YT.Player (criado só na hora de tocar, já visível)
 let ytReady = false;
+let ytVideoId = null;    // vídeo carregado no player agora
+let wanted = null;       // vídeo esperando o player do YouTube ficar pronto
+let watchdog = null;     // confere se o vídeo começou mesmo
 let activated = DEMO;    // o navegador só libera som depois de um clique
-let current = null;      // vídeo carregado agora { videoId, title, duration }
-let pending = null;      // comando que chegou antes de poder tocar
+let current = null;      // vídeo da vez { videoId, title, duration }
+let pending = null;      // comando que chegou antes do clique de liberar o som
 const fake = { playing: false, time: 0 }; // modo demo: vídeo de mentira
 
 const link = isPlayer ? openTvLink(onCommand) : null;
@@ -84,32 +87,98 @@ $('btn-activate').onclick = async () => {
   activated = true;
   $('tv-activate').classList.add('hidden');
   try { await document.documentElement.requestFullscreen(); } catch (_) { /* F11 resolve */ }
-  if (pending) onCommand(pending);
+  if (pending) { const m = pending; pending = null; onCommand(m); }
 };
-
-window.onYouTubeIframeAPIReady = () => {
-  if (!isPlayer || yt || DEMO) return;
-  yt = new YT.Player('tv-player', {
-    playerVars: { rel: 0, modestbranding: 1, playsinline: 1, controls: 0, disablekb: 1, iv_load_policy: 3 },
-    events: {
-      onReady: () => { ytReady = true; if (pending) onCommand(pending); },
-      onStateChange: (e) => {
-        const map = { 0: 'ended', 1: 'playing', 2: 'paused' };
-        const st = map[e.data];
-        if (!st) return;
-        if (st === 'ended') showVideo(false);
-        if (st === 'playing') showVideo(true);
-        link.post({ type: 'tv-state', state: st });
-      },
-      onError: () => link.post({ type: 'tv-error' }),
-    },
-  });
-};
-if (window.YT?.Player) window.onYouTubeIframeAPIReady();
 
 function showVideo(on) {
   $('tv-video').classList.toggle('hidden', !on);
 }
+
+function showLoading(text) {
+  const el = $('tv-loading');
+  el.textContent = text || '';
+  el.classList.toggle('hidden', !text);
+}
+
+function reportError(message) {
+  console.error('[TV]', message);
+  link?.post({ type: 'tv-error', message });
+}
+
+// Toca um vídeo na TV. O player do YouTube é criado na primeira vez, já com a
+// área do vídeo VISÍVEL (criado escondido, ele pode nunca ficar pronto).
+function playVideo(video, start = 0) {
+  showVideo(true);
+  showLoading('Carregando vídeo…');
+  clearTimeout(watchdog);
+  watchdog = setTimeout(() => {
+    if (!yt || !ytReady) {
+      reportError('O player do YouTube não carregou na janela da TV. Recarregue a janela da TV (F5).');
+      showLoading('Não foi possível carregar o player do YouTube. Recarregue esta janela (F5).');
+    } else if (yt.getPlayerState?.() !== 1) {
+      reportError('O vídeo não começou na TV. Clique uma vez na janela da TV e aperte Próxima de novo, ou escolha outra versão.');
+      showLoading('O vídeo não começou. Clique nesta janela uma vez.');
+    }
+  }, 12000);
+
+  if (yt && ytReady) {
+    ytVideoId = video.videoId;
+    yt.loadVideoById({ videoId: video.videoId, startSeconds: start });
+    return;
+  }
+  wanted = { videoId: video.videoId, start };
+  if (!yt && window.YT?.Player) createPlayer();
+  // Se a API do YouTube ainda não chegou, onYouTubeIframeAPIReady cria o player.
+}
+
+function createPlayer() {
+  if (yt || !wanted) return;
+  const first = wanted;
+  ytVideoId = first.videoId;
+  yt = new YT.Player('tv-player', {
+    videoId: first.videoId,
+    playerVars: {
+      autoplay: 1, start: Math.floor(first.start || 0),
+      rel: 0, modestbranding: 1, playsinline: 1, controls: 0, disablekb: 1, iv_load_policy: 3,
+    },
+    events: {
+      onReady: (e) => {
+        ytReady = true;
+        // Pode ter chegado outro pedido enquanto o player carregava.
+        if (wanted && wanted.videoId !== first.videoId) {
+          ytVideoId = wanted.videoId;
+          e.target.loadVideoById({ videoId: wanted.videoId, startSeconds: wanted.start });
+        } else {
+          e.target.playVideo();
+        }
+        wanted = null;
+      },
+      onStateChange: (e) => {
+        const map = { 0: 'ended', 1: 'playing', 2: 'paused' };
+        const st = map[e.data];
+        if (!st) return;
+        if (st === 'playing') { showLoading(''); clearTimeout(watchdog); showVideo(true); }
+        if (st === 'ended') showVideo(false);
+        link.post({ type: 'tv-state', state: st });
+      },
+      onError: (e) => {
+        clearTimeout(watchdog);
+        const msg = [101, 150].includes(e.data)
+          ? 'O dono desse vídeo não deixa ele tocar fora do YouTube. Aperte Próxima ou escolha outra versão.'
+          : 'Esse vídeo não pôde tocar na TV. Aperte Próxima ou escolha outra versão.';
+        reportError(msg);
+        showLoading('');
+        showVideo(false);
+      },
+    },
+  });
+}
+
+window.onYouTubeIframeAPIReady = () => {
+  if (!isPlayer || DEMO) return;
+  if (wanted) createPlayer();
+};
+if (window.YT?.Player && wanted) createPlayer();
 
 function onCommand(m) {
   switch (m.type) {
@@ -118,52 +187,55 @@ function onCommand(m) {
       break;
 
     case 'load':
-      // Ainda sem clique para liberar o som, ou player carregando: guarda para depois.
-      if (!activated || (!DEMO && !ytReady)) {
+      // Ainda sem o clique que libera o som: guarda para depois.
+      if (!activated) {
         pending = m;
-        if (!activated) $('tv-activate').classList.remove('hidden');
+        $('tv-activate').classList.remove('hidden');
         return;
       }
-      pending = null;
       current = { videoId: m.videoId, title: m.title || '', duration: m.duration || 0 };
-      // Só vai para a tela cheia quando o vídeo começa a tocar.
-      showVideo(!!m.autoplay);
       if (DEMO) {
+        showVideo(!!m.autoplay);
         fake.time = m.start || 0;
         fake.playing = !!m.autoplay;
         renderFake();
         link.post({ type: 'tv-state', state: fake.playing ? 'playing' : 'paused' });
       } else if (m.autoplay) {
-        yt.loadVideoById({ videoId: m.videoId, startSeconds: m.start || 0 });
+        playVideo(current, m.start || 0);
       } else {
-        yt.cueVideoById({ videoId: m.videoId, startSeconds: m.start || 0 });
+        // Só "deixar pronto": a TV continua mostrando a fila até o DJ dar play.
+        current.start = m.start || 0;
+        showVideo(false);
       }
       break;
 
     case 'play':
       if (!current) return;
-      showVideo(true);
-      if (DEMO) { fake.playing = true; renderFake(); link.post({ type: 'tv-state', state: 'playing' }); }
-      else yt?.playVideo();
+      if (DEMO) { showVideo(true); fake.playing = true; renderFake(); link.post({ type: 'tv-state', state: 'playing' }); }
+      else if (yt && ytReady && ytVideoId === current.videoId) { showVideo(true); yt.playVideo(); }
+      else playVideo(current, current.start || 0);
       break;
 
     case 'pause':
       if (DEMO) { fake.playing = false; renderFake(); link.post({ type: 'tv-state', state: 'paused' }); }
-      else yt?.pauseVideo();
+      else yt?.pauseVideo?.();
       break;
 
     case 'restart':
       if (!current) return;
-      showVideo(true);
-      if (DEMO) { fake.time = 0; fake.playing = true; renderFake(); }
-      else { yt?.seekTo(0, true); yt?.playVideo(); }
+      if (DEMO) { showVideo(true); fake.time = 0; fake.playing = true; renderFake(); }
+      else if (yt && ytReady && ytVideoId === current.videoId) { showVideo(true); yt.seekTo(0, true); yt.playVideo(); }
+      else playVideo(current, 0);
       break;
 
     case 'stop':
       pending = null;
       current = null;
+      wanted = null;
       fake.playing = false;
-      if (!DEMO) yt?.stopVideo();
+      clearTimeout(watchdog);
+      showLoading('');
+      if (!DEMO) yt?.stopVideo?.();
       showVideo(false);
       break;
   }
@@ -185,7 +257,7 @@ function reportProgress() {
     }
     if (!$('tv-video').classList.contains('hidden')) renderFake();
     link.post({ type: 'tv-progress', time: fake.time, duration: dur });
-  } else if (ytReady && yt.getDuration) {
+  } else if (ytReady && yt?.getDuration && ytVideoId === current.videoId) {
     link.post({ type: 'tv-progress', time: yt.getCurrentTime() || 0, duration: yt.getDuration() || 0 });
   }
 }

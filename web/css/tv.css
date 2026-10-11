@@ -70,3 +70,10 @@ html, body { height: 100%; overflow: hidden; cursor: none; }
 .tv-activate-logo { height: 18vh; width: auto; }
 .tv-activate-btn { font-size: clamp(18px, 2vw, 30px); min-height: 8vh; padding: 0 4vw; border-radius: 999px; }
 .tv-activate p { color: var(--muted); font-size: clamp(14px, 1.3vw, 20px); line-height: 1.5; margin: 0; }
+
+/* "Carregando vídeo…" e avisos por cima do vídeo */
+.tv-loading {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center; padding: 6vw; text-align: center;
+  background: #000; color: var(--muted); font-size: clamp(16px, 2vw, 30px); font-weight: 600;
+}
